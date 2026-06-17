@@ -78,8 +78,3 @@ GMGN-scanner/
 ## License
 
 MIT
-
-
-Clean, no duplicated sections, proper code fences. Replace your current README with this.
-
-Also delete gmgnscanner-structure.txt — it's redundant now.
