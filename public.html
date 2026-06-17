@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMGN Signal Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0b0f;--bg2:#101018;--bg3:#16161f;--bg4:#1c1c28;--bg5:#22222f;
+  --bdr:#23233a;--bdr2:#2a2a42;
+  --green:#00e676;--green2:#00c853;--green-d:rgba(0,230,118,.08);--green-b:rgba(0,230,118,.18);
+  --red:#ff5252;--red-d:rgba(255,82,82,.08);--red-b:rgba(255,82,82,.18);
+  --blue:#448aff;--blue-d:rgba(68,138,255,.08);--blue-b:rgba(68,138,255,.15);
+  --purple:#b388ff;--purple-d:rgba(179,136,255,.08);
+  --yellow:#ffd740;--yellow-d:rgba(255,215,64,.08);
+  --cyan:#18ffff;--cyan-d:rgba(24,255,255,.06);
+  --orange:#ff9100;--orange-d:rgba(255,145,0,.08);
+  --t1:#eef0f5;--t2:#9898b0;--t3:#5e5e78;--t4:#3a3a52;
+  --r:8px;--rs:5px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:5px}
+
+/* ═══ COPY ═══ */
+.copy-btn{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:3px;background:var(--bg5);border:1px solid var(--bdr);color:var(--t3);font-size:10px;cursor:pointer;font-family:inherit;transition:all .12s;flex-shrink:0;opacity:0;pointer-events:none}
+.copy-btn:hover{background:var(--cyan-d);color:var(--cyan);border-color:rgba(24,255,255,.2)}
+.copy-btn.copied{background:var(--green-d)!important;color:var(--green)!important;border-color:var(--green-b)!important;opacity:1!important;pointer-events:auto!important}
+tr.row:hover .copy-btn,.ca-wrap:hover .copy-btn,.tc-ca:hover .copy-btn,.smc-ca:hover .copy-btn,.kol-ca:hover .copy-btn,.modal-ca:hover .copy-btn,.wk-ca:hover .copy-btn{opacity:1;pointer-events:auto}
+.ca-wrap{display:flex;align-items:center;gap:4px}
+.ca-text{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);cursor:pointer;transition:color .12s;white-space:nowrap}
+.ca-text:hover{color:var(--cyan)}
+.copy-vis{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:4px;background:var(--bg4);border:1px solid var(--bdr);color:var(--t3);font-size:10px;cursor:pointer;font-family:inherit;transition:all .12s;flex-shrink:0}
+.copy-vis:hover{background:var(--cyan-d);color:var(--cyan);border-color:rgba(24,255,255,.2)}
+.copy-vis:active{transform:scale(.95)}
+.copy-vis.copied{background:var(--green-d)!important;color:var(--green)!important;border-color:var(--green-b)!important}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green);color:#000;font-size:12px;font-weight:700;padding:8px 20px;border-radius:8px;z-index:999;pointer-events:none;opacity:0;transition:all .25s ease;box-shadow:0 4px 24px rgba(0,230,118,.3)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.topbar{height:52px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:50}
+.tb-left,.tb-right{display:flex;align-items:center;gap:10px}
+.tb-logo{font-weight:900;font-size:18px;letter-spacing:-.5px;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tb-logo span{-webkit-text-fill-color:var(--t2);font-weight:600;font-size:13px;margin-left:6px}
+.chain-sw{display:flex;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;overflow:hidden}
+.chain-opt{padding:5px 12px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer;border:none;background:transparent;font-family:inherit;transition:all .15s}
+.chain-opt.on{background:var(--bg5);color:var(--t1)}
+.conn-btn{padding:6px 16px;border-radius:var(--rs);border:1px solid var(--green-b);background:var(--green-d);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px}
+
+.toolbar{height:46px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 16px;gap:8px;z-index:40}
+.tbtn{padding:5px 11px;border-radius:var(--rs);font-size:12px;font-weight:600;border:1px solid var(--bdr);background:var(--bg3);color:var(--t2);cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
+.tbtn:hover{border-color:var(--bdr2);background:var(--bg4)}
+.tbtn.on{border-color:var(--green-b);background:var(--green-d);color:var(--green)}
+.tsep{width:1px;height:20px;background:var(--bdr);flex-shrink:0;margin:0 4px}
+.tlbl{font-size:11px;color:var(--t3);white-space:nowrap}
+.tfill{flex:1}
+.scan-btn{padding:5px 16px;border-radius:var(--rs);border:none;background:linear-gradient(135deg,var(--green2),#00e5ff);color:#000;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.3px;transition:all .15s}
+.scan-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,230,118,.3)}
+.scan-btn:disabled{opacity:.4;transform:none;box-shadow:none;cursor:not-allowed}
+.th-tabs{display:flex;gap:2px}
+.th-tab{padding:5px 14px;border-radius:var(--rs);font-size:12px;font-weight:600;color:var(--t3);cursor:pointer;border:none;background:transparent;font-family:inherit;transition:all .12s}
+.th-tab:hover{color:var(--t2)}.th-tab.on{background:var(--bg4);color:var(--t1)}
+
+.main{display:flex;height:calc(100vh - 52px - 46px);overflow:hidden}
+.left{width:270px;min-width:270px;background:var(--bg2);border-right:1px solid var(--bdr);overflow-y:auto}
+.lp{padding:12px 14px 10px;border-bottom:1px solid var(--bdr)}
+.lp-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.lp-title .cnt{font-family:'JetBrains Mono',monospace;color:var(--t4);background:var(--bg4);padding:1px 6px;border-radius:3px}
+.pill-row{display:flex;flex-wrap:wrap;gap:4px}
+.pill{padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--bdr);background:var(--bg3);color:var(--t3);cursor:pointer;font-family:inherit;transition:all .12s}
+.pill:hover{border-color:var(--bdr2);color:var(--t2)}
+.pill.on{border-color:var(--green-b);background:var(--green-d);color:var(--green)}
+.rng{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rng label{font-size:12px;color:var(--t2);min-width:90px}
+.rng .val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);min-width:30px;text-align:right}
+.rng input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--bdr);border-radius:3px;outline:none}
+.rng input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--green);cursor:pointer;box-shadow:0 0 6px rgba(0,230,118,.3)}
+.lp-row{display:flex;align-items:center;margin-bottom:8px}
+.lp-row label{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:6px;cursor:pointer}
+.lp-row input[type=checkbox]{display:none}
+.chk{width:14px;height:14px;border:1.5px solid var(--bdr2);border-radius:3px;display:grid;place-items:center;transition:all .12s;flex-shrink:0}
+.chk::after{content:'\2713';font-size:9px;color:transparent;transition:color .1s}
+input:checked+.chk{background:var(--green);border-color:var(--green)}
+input:checked+.chk::after{color:#000}
+.center{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.tbl-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bdr);background:var(--bg2);flex-shrink:0}
+.th-r{display:flex;align-items:center;gap:10px}
+.th-cnt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3)}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:12px;background:var(--green-d);color:var(--green)}
+.live-badge .dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pdot 1.5s ease infinite}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.tbl-scroll{flex:1;overflow-y:auto}
+table.tt{width:100%;border-collapse:collapse;font-size:12px}
+table.tt thead{position:sticky;top:0;z-index:10}
+table.tt th{padding:8px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--t3);background:var(--bg2);border-bottom:1px solid var(--bdr);white-space:nowrap}
+table.tt th.r{text-align:right}
+tr.row{border-bottom:1px solid rgba(35,35,58,.5);cursor:pointer;transition:background .1s}
+tr.row:hover{background:var(--bg3)}
+tr.row td{padding:8px 10px;vertical-align:middle}
+tr.row td.r{text-align:right}
+.fl{position:absolute;left:0;top:0;bottom:0;width:2px;border-radius:0 2px 2px 0}
+.fl.hot{background:var(--green);box-shadow:0 0 8px var(--green)}.fl.warm{background:var(--yellow)}.fl.cool{background:var(--blue)}
+.tc{display:flex;align-items:center;gap:8px}
+.ta{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.tr2{display:flex;flex-direction:column;gap:2px}
+.ts{font-weight:700;font-size:13px;display:flex;align-items:center;gap:5px}
+.tp{font-size:10px;color:var(--t3);display:flex;gap:4px;align-items:center}
+.dex{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:.3px;text-transform:uppercase}
+.dex.pump{background:rgba(29,185,84,.12);color:#1db954}.dex.raydium{background:rgba(99,102,241,.12);color:#6366f1}.dex.meteora{background:rgba(6,182,212,.12);color:#06b6d4}.dex.orca{background:rgba(245,158,11,.12);color:#f59e0b}
+.kols{display:flex;align-items:center}
+.kd{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:8px;font-weight:800;color:#fff;margin-left:-4px;border:1.5px solid var(--bg2);flex-shrink:0}
+.kd:first-child{margin-left:0}
+.kp{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);margin-left:4px}
+.sm-c{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.sm-n{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600}
+.sm-b{width:32px;height:3px;background:var(--bg5);border-radius:3px;overflow:hidden}
+.sm-f{height:100%;border-radius:3px;transition:width .5s ease}
+.pc{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500}
+.pc.up{color:var(--green)}.pc.down{color:var(--red)}.pc.flat{color:var(--t3)}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.badge.new{background:var(--green-d);color:var(--green);animation:bp 2s ease infinite}
+@keyframes bp{0%,100%{opacity:1}50%{opacity:.5}}
+.badge.clean{background:var(--green-d);color:var(--green)}.badge.warn{background:var(--yellow-d);color:var(--yellow)}.badge.risky{background:var(--red-d);color:var(--red)}
+.right{width:240px;min-width:240px;background:var(--bg2);border-left:1px solid var(--bdr);overflow-y:auto}
+.rp{padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.rpt{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);margin-bottom:10px}
+.rpi{display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px;cursor:pointer}
+.rpi:hover{background:var(--bg3);margin:0 -14px;padding:4px 14px}
+.rpn{font-weight:600;display:flex;align-items:center;gap:6px}
+.alert{padding:10px 12px;border-radius:var(--r);margin-bottom:6px;font-size:11px;line-height:1.4}
+.alert.buy{background:var(--green-d);border:1px solid var(--green-b);color:var(--green)}
+.alert.info{background:var(--blue-d);border:1px solid var(--blue-b);color:var(--blue)}
+.alert-t{font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.7;margin-top:3px}
+.panel-view{display:none;flex:1;overflow:hidden;flex-direction:column}
+.panel-view.active{display:flex}
+
+/* ═══ TRENDING ═══ */
+.trend-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;padding:14px;overflow-y:auto;flex:1}
+.tc-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.tc-card:hover{border-color:var(--bdr2);transform:translateY(-2px)}
+.tc-rank{position:absolute;top:8px;right:10px;font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:900;color:rgba(255,255,255,.04);line-height:1}
+.tc-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tc-card .ta{width:36px;height:36px}
+.tc-card .sym{font-size:14px;font-weight:800}
+.tc-card .name{font-size:10px;color:var(--t3)}
+.tc-ca{display:flex;align-items:center;gap:4px;margin-bottom:8px}
+.tc-ca .ca-text{font-size:9px}
+.tc-ca .copy-btn{opacity:.6;pointer-events:auto}
+.tc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.tc-m{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0;border-bottom:1px solid rgba(35,35,58,.5)}
+.tc-m:last-child{border-bottom:none}
+.tc-ml{color:var(--t3)}.tc-mv{font-family:'JetBrains Mono',monospace;font-weight:600}
+.tc-bar{height:3px;background:var(--bg5);border-radius:2px;margin-top:8px;overflow:hidden}
+.tc-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* ═══ SMART MONEY ═══ */
+.sm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px;padding:14px;overflow-y:auto;flex:1}
+.sm-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:14px;cursor:pointer;transition:all .15s}
+.sm-card:hover{border-color:var(--bdr2);background:var(--bg4)}
+.smc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.smc-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.smc-info{flex:1;min-width:0}
+.smc-name{font-size:13px;font-weight:700}
+.smc-addr{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)}
+.smc-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-left:6px}
+.smc-tag.whale{background:var(--blue-d);color:var(--blue)}.smc-tag.sniper{background:var(--orange-d);color:var(--orange)}.smc-tag.smart{background:var(--green-d);color:var(--green)}
+.smc-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.smc-stat{background:var(--bg2);border-radius:var(--rs);padding:5px 6px;text-align:center}
+.smc-sl{font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:var(--t3);margin-bottom:1px}
+.smc-sv{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.smc-buys{display:flex;flex-direction:column;gap:4px}
+.smc-buy{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--bdr)}
+.smc-buy .tk{font-weight:700;font-size:11px;flex:1}
+.smc-buy .sol{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)}
+.smc-buy .pnl{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
+.smc-buy .pnl.up{color:var(--green)}.smc-buy .pnl.down{color:var(--red)}
+.smc-buy .ago{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4)}
+.smc-ca{display:flex;align-items:center;gap:3px;margin-top:2px}
+
+/* ═══ KOL ═══ */
+.kol-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px;padding:14px;overflow-y:auto;flex:1}
+.kol-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:14px;transition:all .15s;cursor:pointer;position:relative;overflow:hidden}
+.kol-card:hover{border-color:var(--bdr2);background:var(--bg4)}
+.kol-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+.kol-card.hot::before{background:linear-gradient(90deg,var(--green),var(--cyan))}
+.kol-card.warm::before{background:linear-gradient(90deg,var(--yellow),var(--orange))}
+.kol-card.mid::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
+.kc-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.kc-av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0;position:relative}
+.kc-av .kc-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid var(--bg3)}
+.kc-av .kc-dot.online{background:var(--green)}.kc-av .kc-dot.offline{background:var(--t4)}
+.kc-info{flex:1;min-width:0}
+.kc-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kc-handle{font-size:11px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+.kc-follow{font-size:10px;color:var(--t3);margin-top:1px}
+.kc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.kc-stat{background:var(--bg2);border-radius:var(--rs);padding:6px 8px;text-align:center}
+.kc-stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:2px}
+.kc-stat-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+.kc-tokens{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.kc-token{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:var(--rs);background:var(--bg2);border:1px solid var(--bdr);font-size:11px;font-weight:600}
+.kc-token .tk-ca{flex:1}
+.kc-token .pct{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
+.kc-token .pct.up{color:var(--green)}.kc-token .pct.down{color:var(--red)}
+.kc-bar{display:flex;height:4px;border-radius:2px;overflow:hidden;background:var(--bg2)}
+.kc-bar-seg{transition:width .5s ease}
+.kc-bio{font-size:10px;color:var(--t4);margin-top:6px;display:flex;align-items:center;gap:4px}
+
+/* ═══ WALLET TRACKER ═══ */
+.wt-wrap{display:flex;flex:1;overflow:hidden}
+.wt-left{width:340px;min-width:340px;border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden}
+.wt-right{flex:1;overflow-y:auto;padding:20px}
+
+.wt-add{padding:16px;border-bottom:1px solid var(--bdr);background:var(--bg2)}
+.wt-add-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);margin-bottom:10px}
+.wt-input-row{display:flex;gap:6px}
+.wt-input{flex:1;padding:8px 12px;border-radius:var(--rs);border:1px solid var(--bdr);background:var(--bg3);color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color .12s}
+.wt-input:focus{border-color:var(--cyan-b,var(--bdr2))}
+.wt-input::placeholder{color:var(--t4)}
+.wt-add-btn{padding:8px 16px;border-radius:var(--rs);border:none;background:linear-gradient(135deg,var(--green2),#00e5ff);color:#000;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.wt-add-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,230,118,.3)}
+.wt-add-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.wt-hint{font-size:10px;color:var(--t4);margin-top:6px}
+
+.wt-list{flex:1;overflow-y:auto;padding:8px}
+.wt-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t4);text-align:center;gap:8px;padding:30px}
+.wt-empty-icon{font-size:36px;opacity:.3}
+.wt-empty-t{font-size:13px;font-weight:600;color:var(--t3)}
+.wt-empty-s{font-size:11px;line-height:1.5;max-width:240px}
+
+.wt-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--bdr);background:var(--bg3);margin-bottom:6px;cursor:pointer;transition:all .12s;position:relative}
+.wt-item:hover{border-color:var(--bdr2);background:var(--bg4)}
+.wt-item.sel{border-color:var(--cyan-b,rgba(24,255,255,.2));background:var(--cyan-d);box-shadow:inset 0 0 0 1px rgba(24,255,255,.1)}
+.wt-item-av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;position:relative}
+.wt-item-av .wt-status-dot{position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;border:2px solid var(--bg3)}
+.wt-status-dot.active{background:var(--green)}.wt-status-dot.inactive{background:var(--t4)}
+.wt-item-info{flex:1;min-width:0}
+.wt-item-addr{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--t1)}
+.wt-item-meta{display:flex;gap:8px;align-items:center;margin-top:2px}
+.wt-item-tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase}
+.wt-item-tag.auto{background:var(--purple-d);color:var(--purple)}
+.wt-item-tag.manual{background:var(--blue-d);color:var(--blue)}
+.wt-item-pnl{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
+.wt-item-pnl.up{color:var(--green)}.wt-item-pnl.down{color:var(--red)}
+.wt-item-wr{font-size:10px;color:var(--t3)}
+.wt-item-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .12s}
+.wt-item:hover .wt-item-actions{opacity:1}
+.wt-item-btn{width:26px;height:26px;border-radius:var(--rs);border:1px solid var(--bdr);background:var(--bg4);color:var(--t3);cursor:pointer;display:grid;place-items:center;font-size:11px;transition:all .12s;font-family:inherit}
+.wt-item-btn:hover{border-color:var(--bdr2);color:var(--t1)}
+.wt-item-btn.danger:hover{border-color:var(--red-b);background:var(--red-d);color:var(--red)}
+
+/* Detail Panel */
+.wd-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px}
+.wd-av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0}
+.wd-info{flex:1}
+.wd-label{font-size:11px;color:var(--t3);margin-bottom:2px}
+.wd-addr{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.wd-addr-text{word-break:break-all;line-height:1.4}
+.wd-meta{display:flex;gap:10px;margin-top:4px;align-items:center}
+.wd-meta .wd-chip{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid var(--bdr);background:var(--bg4);color:var(--t3)}
+
+.wd-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:20px}
+.wd-stat{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 14px}
+.wd-stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px}
+.wd-stat-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700}
+.wd-stat-sub{font-size:10px;color:var(--t4);margin-top:2px}
+
+.wd-section{margin-bottom:20px}
+.wd-section-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.wd-trade{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:6px;transition:all .12s}
+.wd-trade:hover{border-color:var(--bdr2);background:var(--bg4)}
+.wd-trade-icon{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.wd-trade-side{padding:2px 6px;border-radius:3px;font-size:9px;font-weight:800;text-transform:uppercase;flex-shrink:0}
+.wd-trade-side.buy{background:var(--green-d);color:var(--green)}.wd-trade-side.sell{background:var(--red-d);color:var(--red)}
+.wd-trade-info{flex:1;min-width:0}
+.wd-trade-tk{font-weight:700;font-size:12px}
+.wd-trade-amount{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);margin-top:1px}
+.wd-trade-right{text-align:right;flex-shrink:0}
+.wd-trade-pnl{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.wd-trade-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4)}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(12px);z-index:200;justify-content:center;align-items:flex-start;padding-top:4vh}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;width:700px;max-height:90vh;overflow-y:auto;animation:mu .2s ease}
+@keyframes mu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.mh{padding:18px 20px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:flex-start}
+.mc{width:28px;height:28px;border-radius:6px;border:1px solid var(--bdr);background:var(--bg4);color:var(--t3);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:all .12s}
+.mc:hover{border-color:var(--bdr2);color:var(--t1)}
+.mb{padding:20px}
+.mg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px}
+.ms{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px}
+.msl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:3px}
+.msv{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700}
+.mst{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);margin:16px 0 10px}
+.mki{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:6px}
+.mka{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.mkn{font-weight:600;font-size:13px}.mkf{font-size:11px;color:var(--t3)}
+.mkoa{margin-left:auto;text-align:right}
+.mks{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green);font-weight:600}
+.mkp{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3)}
+.chk-list{list-style:none}
+.chk-list li{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(35,35,58,.5);font-size:12px}
+.chk-list li:last-child{border-bottom:none}
+.ci{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10px;flex-shrink:0}
+.ci.pass{background:var(--green-d);color:var(--green)}.ci.fail{background:var(--red-d);color:var(--red)}
+.ct{margin-left:auto;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.ct.pass{background:var(--green-d);color:var(--green)}.ct.fail{background:var(--red-d);color:var(--red)}
+.modal-ca-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:14px}
+.modal-ca-bar .ca-full{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t2);word-break:break-all;flex:1;line-height:1.4}
+.modal-ca-bar .copy-vis{font-size:11px;padding:5px 12px;font-weight:700}
+.modal-links{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.modal-link{padding:4px 10px;border-radius:var(--rs);font-size:10px;font-weight:700;border:1px solid var(--bdr);background:var(--bg3);color:var(--t3);cursor:pointer;font-family:inherit;text-decoration:none;transition:all .12s;display:flex;align-items:center;gap:4px}
+.modal-link:hover{border-color:var(--bdr2);color:var(--t2);background:var(--bg4)}
+
+/* Confirm dialog */
+.wt-confirm{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:300;display:none;justify-content:center;align-items:center}
+.wt-confirm.open{display:flex}
+.wt-confirm-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:24px;width:380px;animation:mu .15s ease}
+.wt-confirm-t{font-size:15px;font-weight:700;margin-bottom:8px}
+.wt-confirm-s{font-size:12px;color:var(--t3);margin-bottom:18px;line-height:1.5}
+.wt-confirm-addr{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);background:var(--bg3);padding:6px 10px;border-radius:var(--rs);word-break:break-all;margin-bottom:18px}
+.wt-confirm-btns{display:flex;gap:8px;justify-content:flex-end}
+.wt-confirm-btn{padding:7px 18px;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .12s}
+.wt-confirm-btn.cancel{border:1px solid var(--bdr);background:var(--bg3);color:var(--t2)}
+.wt-confirm-btn.cancel:hover{border-color:var(--bdr2);background:var(--bg4)}
+.wt-confirm-btn.danger{border:none;background:var(--red);color:#fff}
+.wt-confirm-btn.danger:hover{background:#ff6b6b}
+
+@media(max-width:1400px){.right{display:none}}
+@media(max-width:1100px){.left{display:none}}
+@media(max-width:900px){.wt-left{width:100%;min-width:0}.wt-wrap{flex-direction:column}.wt-right{display:none}}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- Confirm dialog -->
+<div class="wt-confirm" id="wtConfirm">
+  <div class="wt-confirm-box">
+    <div class="wt-confirm-t">Remove Wallet?</div>
+    <div class="wt-confirm-s">This wallet will be removed from your tracker. All cached data will be lost.</div>
+    <div class="wt-confirm-addr" id="wtConfirmAddr"></div>
+    <div class="wt-confirm-btns">
+      <button class="wt-confirm-btn cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="wt-confirm-btn danger" id="wtConfirmBtn">Remove</button>
+    </div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="tb-left"><div class="tb-logo">GMGN<span>scanner</span></div></div>
+  <div class="tb-right">
+    <div class="chain-sw">
+      <button class="chain-opt on" onclick="ck(this)">Solana</button>
+      <button class="chain-opt" onclick="ck(this)">ETH</button>
+      <button class="chain-opt" onclick="ck(this)">BNB</button>
+      <button class="chain-opt" onclick="ck(this)">BASE</button>
+    </div>
+    <div class="conn-btn"><span style="width:5px;height:5px;border-radius:50%;background:var(--green)"></span>Demo Mode</div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="th-tabs">
+    <button class="th-tab on" data-view="scanner" onclick="switchView(this)">New Pairs</button>
+    <button class="th-tab" data-view="trending" onclick="switchView(this)">Trending</button>
+    <button class="th-tab" data-view="smartmoney" onclick="switchView(this)">Smart Money</button>
+    <button class="th-tab" data-view="kols" onclick="switchView(this)">KOL Activity</button>
+    <button class="th-tab" data-view="wallets" onclick="switchView(this)">Wallet Tracker</button>
+  </div>
+  <div class="tsep"></div>
+  <div id="scannerTools" style="display:flex;align-items:center;gap:8px">
+    <button class="tbtn on" data-t="5" onclick="setT(this)">5m</button>
+    <button class="tbtn" data-t="15" onclick="setT(this)">15m</button>
+    <button class="tbtn" data-t="60" onclick="setT(this)">1h</button>
+    <button class="tbtn" data-t="240" onclick="setT(this)">6h</button>
+    <button class="tbtn" data-t="0" onclick="setT(this)">24h</button>
+    <div class="tsep"></div>
+    <button class="tbtn" id="tSafe" onclick="this.classList.toggle('on');renderScanner()">Safe Only</button>
+    <button class="tbtn" id="tKol" onclick="this.classList.toggle('on');renderScanner()">KOL Buys</button>
+  </div>
+  <div class="tfill"></div>
+  <button class="scan-btn" id="scanBtn" onclick="doScan()">SCAN NOW</button>
+</div>
+
+<div class="main">
+  <div class="left" id="leftPanel">
+    <div class="lp">
+      <div class="lp-title">DEX <span class="cnt" id="dexN">All</span></div>
+      <div class="pill-row" id="dexP">
+        <button class="pill on" data-d="all">All</button>
+        <button class="pill" data-d="pump.fun">Pump.fun</button>
+        <button class="pill" data-d="raydium">Raydium</button>
+        <button class="pill" data-d="meteora">Meteora</button>
+        <button class="pill" data-d="orca">Orca</button>
+      </div>
+    </div>
+    <div class="lp">
+      <div class="lp-title">Signal Filters</div>
+      <div class="rng"><label>KOL Buys</label><input type="range" id="fK" min="0" max="10" value="0" oninput="$('vK').textContent=this.value;renderScanner()"><span class="val" id="vK">0</span></div>
+      <div class="rng"><label>Smart Wallets</label><input type="range" id="fS" min="0" max="30" value="0" oninput="$('vS').textContent=this.value;renderScanner()"><span class="val" id="vS">0</span></div>
+      <div class="rng"><label>Snipers</label><input type="range" id="fSn" min="0" max="20" value="0" oninput="$('vSn').textContent=this.value;renderScanner()"><span class="val" id="vSn">0</span></div>
+      <div class="rng"><label>Min Score</label><input type="range" id="fSc" min="0" max="80" value="0" step="5" oninput="$('vSc').textContent=this.value;renderScanner()"><span class="val" id="vSc">0</span></div>
+    </div>
+    <div class="lp">
+      <div class="lp-title">Dev Checks</div>
+      <div class="lp-row"><label><input type="checkbox" id="fDC" onchange="renderScanner()"><span class="chk"></span>Clean dev only</label></div>
+      <div class="lp-row"><label><input type="checkbox" id="fDR" onchange="renderScanner()"><span class="chk"></span>No previous rugs</label></div>
+      <div class="lp-row"><label><input type="checkbox" id="fDE" onchange="renderScanner()"><span class="chk"></span>Experienced (5+ deploys)</label></div>
+    </div>
+    <div class="lp">
+      <div class="lp-title">Safety</div>
+      <div class="lp-row"><label><input type="checkbox" id="fHP" onchange="renderScanner()"><span class="chk"></span>Not a honeypot</label></div>
+      <div class="lp-row"><label><input type="checkbox" id="fLP" onchange="renderScanner()"><span class="chk"></span>LP burned / locked</label></div>
+      <div class="lp-row"><label><input type="checkbox" id="fMT" onchange="renderScanner()"><span class="chk"></span>Mint authority off</label></div>
+      <div class="lp-row"><label><input type="checkbox" id="fTX" onchange="renderScanner()"><span class="chk"></span>No buy/sell tax</label></div>
+      <div class="lp-row"><label><input type="checkbox" id="fDW" onchange="renderScanner()"><span class="chk"></span>Dev wallet &lt;5%</label></div>
+    </div>
+  </div>
+
+  <div class="center">
+    <!-- SCANNER -->
+    <div class="panel-view active" id="view-scanner">
+      <div class="tbl-head"><div><span class="th-cnt" id="rCnt">—</span></div><div class="th-r"><div class="live-badge"><div class="dot"></div>DEMO DATA</div></div></div>
+      <div class="tbl-scroll">
+        <table class="tt"><thead><tr>
+          <th style="width:30px">#</th><th>Token / Contract</th><th>Age</th><th>Dev</th><th>KOLs</th>
+          <th class="r">Smart $</th><th class="r">Price</th><th class="r">5m %</th><th class="r">Liq</th><th class="r">MCap</th><th class="r">Holders</th><th class="r">Score</th>
+        </tr></thead><tbody id="tb"></tbody></table>
+      </div>
+    </div>
+
+    <!-- TRENDING -->
+    <div class="panel-view" id="view-trending">
+      <div class="tbl-head">
+        <div class="pill-row">
+          <button class="pill on" onclick="trendSort='hot';renderTrending(this)">Hot</button>
+          <button class="pill" onclick="trendSort='vol';renderTrending(this)">Volume</button>
+          <button class="pill" onclick="trendSort='gainers';renderTrending(this)">Top Gainers</button>
+          <button class="pill" onclick="trendSort='holders';renderTrending(this)">Holder Growth</button>
+        </div>
+        <div class="th-r"><span class="th-cnt" id="trendCnt">—</span><div class="live-badge"><div class="dot"></div>LIVE</div></div>
+      </div>
+      <div class="trend-cards" id="trendGrid"></div>
+    </div>
+
+    <!-- SMART MONEY -->
+    <div class="panel-view" id="view-smartmoney">
+      <div class="tbl-head">
+        <div class="pill-row">
+          <button class="pill on" onclick="smSort='pnl';renderSmartMoney(this)">Top PnL</button>
+          <button class="pill" onclick="smSort='win';renderSmartMoney(this)">Win Rate</button>
+          <button class="pill" onclick="smSort='recent';renderSmartMoney(this)">Most Active</button>
+          <button class="pill" onclick="smSort='whale';renderSmartMoney(this)">Whales</button>
+        </div>
+        <div class="th-r"><span class="th-cnt" id="smCnt">—</span><div class="live-badge"><div class="dot"></div>TRACKING</div></div>
+      </div>
+      <div class="sm-grid" id="smGrid"></div>
+    </div>
+
+    <!-- KOL ACTIVITY -->
+    <div class="panel-view" id="view-kols">
+      <div class="tbl-head">
+        <div class="pill-row">
+          <button class="pill on" onclick="kolSort='active';renderKols(this)">Most Active</button>
+          <button class="pill" onclick="kolSort='accurate';renderKols(this)">Most Accurate</button>
+          <button class="pill" onclick="kolSort='followers';renderKols(this)">Followers</button>
+          <button class="pill" onclick="kolSort='recent';renderKols(this)">Recent Calls</button>
+        </div>
+        <div class="th-r"><span class="th-cnt" id="kolCnt">—</span><div class="live-badge"><div class="dot"></div>LIVE FEED</div></div>
+      </div>
+      <div class="kol-grid" id="kolGrid"></div>
+    </div>
+
+    <!-- WALLET TRACKER -->
+    <div class="panel-view" id="view-wallets">
+      <div class="tbl-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="th-cnt" id="wtCnt">0 wallets</span>
+          <div class="pill-row" style="margin:0">
+            <button class="pill on" onclick="wtSort='recent';renderWalletList(this)">Recent</button>
+            <button class="pill" onclick="wtSort='pnl';renderWalletList(this)">Top PnL</button>
+            <button class="pill" onclick="wtSort='winrate';renderWalletList(this)">Win Rate</button>
+          </div>
+        </div>
+        <div class="th-r"><div class="live-badge"><div class="dot"></div>TRACKING</div></div>
+      </div>
+      <div class="wt-wrap">
+        <div class="wt-left">
+          <div class="wt-add">
+            <div class="wt-add-title">Track a Wallet</div>
+            <div class="wt-input-row">
+              <input type="text" class="wt-input" id="wtInput" placeholder="Paste Solana wallet address..." maxlength="50" onkeydown="if(event.key==='Enter')addWallet()">
+              <button class="wt-add-btn" id="wtAddBtn" onclick="addWallet()">+ Add</button>
+            </div>
+            <div class="wt-hint">Enter a valid Solana address. Data is saved locally.</div>
+          </div>
+          <div class="wt-list" id="wtList"></div>
+        </div>
+        <div class="wt-right" id="wtDetail">
+          <div class="wt-empty">
+            <div class="wt-empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
+            </div>
+            <div class="wt-empty-t">No wallet selected</div>
+            <div class="wt-empty-s">Add a wallet address using the input above, then click it to view trades, PnL, and activity.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="rp"><div class="rpt">Live Feed</div><div id="feed"></div></div>
+    <div class="rp"><div class="rpt">Top Scored</div><div id="tops"></div></div>
+    <div class="rp"><div class="rpt">KOL Alerts</div><div id="kolAlerts"></div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="mbg" onclick="if(event.target===this)closeM()">
+  <div class="modal" id="mbox"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let tokens=[],smartWallets=[],kols=[];
+let selD='all',tMin=5,trendSort='hot',smSort='pnl',kolSort='active',currentView='scanner';
+
+// ═══ WALLET TRACKER STATE ═══
+let trackedWallets=[]; // {addr, label, addedAt, color}
+let walletDataCache={}; // addr -> mock data
+let selectedWallet=null;
+let wtSort='recent';
+
+// Load from localStorage
+function loadWallets(){
+  try{const s=localStorage.getItem('gmgn_wallets');if(s)trackedWallets=JSON.parse(s)}catch(e){}
+  try{const s=localStorage.getItem('gmgn_wallet_data');if(s)walletDataCache=JSON.parse(s)}catch(e){}
+}
+function saveWallets(){
+  try{localStorage.setItem('gmgn_wallets',JSON.stringify(trackedWallets))}catch(e){}
+  try{localStorage.setItem('gmgn_wallet_data',JSON.stringify(walletDataCache))}catch(e){}
+}
+
+// ═══ HELPERS ═══
+function hsl(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0;return`hsl(${Math.abs(h)%360},65%,55%)`}
+function rstr(n){let s='';for(let i=0;i<n;i++)s+='0123456789abcdef'[Math.floor(Math.random()*16)];return s}
+function rfl(a,b){return a+Math.random()*(b-a)}
+function ri(a,b){return Math.floor(rfl(a,b+1))}
+function ago(ts){const d=(Date.now()-ts)/1000;if(d<60)return Math.floor(d)+'s';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return(d/3600).toFixed(1)+'h';return Math.floor(d/86400)+'d'}
+function fmtP(p){if(!p)return'$0';if(p<.000001)return'$'+p.toExponential(1);if(p<.01)return'$'+p.toFixed(8).replace(/0+$/,'');return'$'+p.toFixed(6)}
+function fmt$(v){if(!v)return'$0';if(v>=1e6)return'$'+(v/1e6).toFixed(1)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(1)+'K';return'$'+Math.round(v)}
+function trunc(a,n=6){return a?.length>n*2?a.slice(0,n)+'..'+a.slice(-n):a||'—'}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+
+function copyCA(ca,label,e){
+  if(e)e.stopPropagation();
+  navigator.clipboard.writeText(ca).then(()=>{
+    showToast('Copied '+trunc(ca,4));
+    const btn=e?.target?.closest('.copy-btn,.copy-vis');
+    if(btn){btn.classList.add('copied');btn.innerHTML='<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8.5l3.5 3.5L13 5"/></svg> Copied';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML=copySVG+' Copy';},1200)}
+  });
+}
+function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500)}
+const copySVG='<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M3 10V3.5A1.5 1.5 0 0 1 4.5 2H11"/></svg>';
+
+// ═══ MOCK DATA ═══
+const SYMS=['DOGMOON','PEPE2','GROKAI','BONKINU','WIFCAT','ELONDG','SHIBX','MEMEAI','SOLCAT','FLOKI2','BABYDOGE','TURBO','GASS','NDX','FARTCOIN','MOONSHOT','DEGEN','CHAD','BRETT','POPCAT','MEW','CATNIP','WOWNERO','RAWR','KOKO','MOCHI','PNUT','GOAT','ACT','GRASS'];
+const NAMES=['DogMoon','Pepe 2.0','Grok AI','Bonk Inu','WIF Cat','Elon Doge','ShibX','Meme AI','SolCat','Floki 2','Baby Doge','Turbo Token','Gass Gas','NDX Finance','FartCoin','MoonShot','Degen Coin','Chad Token','Brett Coin','PopCat','MEW','CatNip','Wownero','Rawr Token','Koko Coin','Mochi','Peanut','GoatFinance','ActToken','Grass'];
+const DEXS=['pump.fun','raydium','meteora','orca','pump.fun','pump.fun','raydium','meteora','pump.fun','raydium'];
+const KOLNAMES=['CryptoWhale','DeFiKing','SmartApe','MoonGems','BitHunter','SnipePro','AlphaCall','GemFinder','OnChainZ','WhaleAlert','DeGenNinja','PumpLord','MoonRise','SolSeeker','TokenSniff','DeFiOwl'];
+const BIOS=['Top trader. Early calls on WIF, BONK.','DeFi researcher. On-chain analytics.','Alpha caller. 78% hit rate.','Gem hunter. Solana focused.','MEV & snipe specialist.','Data-driven calls only.','100K+ community leader.','Smart money tracker.','CT influencer.','Whale movement alerts.'];
+
+function genTokens(){
+  tokens=[];
+  for(let i=0;i<30;i++){
+    const sym=SYMS[i%SYMS.length];const age=ri(30,86400);const nKols=ri(0,6);
+    const tkols=[];const usedK=new Set();
+    for(let k=0;k<nKols;k++){let ni;do{ni=ri(0,KOLNAMES.length-1)}while(usedK.has(ni));usedK.add(ni);const nm=KOLNAMES[ni];tkols.push({name:nm,init:nm[0],color:hsl(nm),followers:ri(5,500)+'K',sol:+rfl(0.5,12).toFixed(1),price:+rfl(0.000001,0.01).toFixed(8)})}
+    tokens.push({
+      ca:rstr(44),sym,name:NAMES[i%NAMES.length],color:hsl(sym),deployed:Date.now()-age*1000,
+      dex:DEXS[i%DEXS.length],price:+rfl(0.0000001,0.5).toFixed(8),pc5:+rfl(-45,80).toFixed(1),
+      liq:+rfl(500,500000).toFixed(0),mcap:+rfl(5000,5000000).toFixed(0),vol24h:+rfl(100,200000).toFixed(0),
+      holders:ri(10,5000),buys:ri(5,2000),sells:ri(2,800),
+      devDeploys:ri(0,15),devRugs:ri(0,3),devWallet:+rfl(0.1,25).toFixed(1),
+      smartW:ri(0,25),whales:ri(0,8),snipers:ri(0,12),
+      hp:Math.random()<0.08,lpL:Math.random()>0.25,mint:Math.random()<0.1,
+      oSrc:Math.random()>0.15,buyT:Math.random()<0.1?ri(1,10):0,sellT:Math.random()<0.1?ri(1,10):0,
+      top10:+rfl(0.05,0.6).toFixed(2),kols:tkols,
+      volChange:+rfl(-30,300).toFixed(0),holderGrowth:+rfl(-10,50).toFixed(0)
+    });
+  }
+}
+
+function genSmartWallets(){
+  const names=['7xK9m...3fPq','9oL2n...8kJw','4tR7b...1mNc','2aF5x...6dHs','8cV3k...9gTz','5nQ1p...4wXr','3jM8y...7bLk','6eS2f...0qDv','1hW4a...5iCe','9rG7t...2uBo'];
+  const tags=['whale','sniper','smart','whale','sniper','smart','whale','smart','sniper','smart'];
+  smartWallets=names.map((name,i)=>{
+    const tag=tags[i];const nBuys=ri(3,8);
+    const buys=[];const usedT=new Set();
+    for(let b=0;b<nBuys;b++){let ti;do{ti=ri(0,tokens.length-1)}while(usedT.has(ti)&&usedT.size<tokens.length);usedT.add(ti);const t=tokens[ti];buys.push({sym:t.sym,color:t.color,sol:+rfl(0.5,25).toFixed(1),pnl:+rfl(-40,200).toFixed(0),time:ri(1,7200),ca:t.ca})}
+    return{name,tag,tagColor:tag==='whale'?'var(--blue)':tag==='sniper'?'var(--orange)':'var(--green)',wins:ri(3,28),total:ri(10,50),totalSol:+rfl(10,500).toFixed(0),totalPnl:+rfl(-50,2000).toFixed(0),avgBuy:+rfl(0.5,10).toFixed(1),avgHold:ri(1,120)+'m',bestTrade:ri(20,500)+'%',buys:buys.sort((a,b)=>b.pnl-a.pnl)};
+  });
+}
+
+function genKols(){
+  kols=KOLNAMES.map((name,i)=>{
+    const handles=KOLNAMES.map(n=>'@'+n.toLowerCase());
+    const nCalls=ri(5,15);const calls=[];const usedT=new Set();
+    for(let c=0;c<nCalls;c++){let ti;do{ti=ri(0,tokens.length-1)}while(usedT.has(ti)&&usedT.size<tokens.length);usedT.add(ti);const t=tokens[ti];calls.push({sym:t.sym,color:t.color,pc:+rfl(-50,300).toFixed(0),sol:+rfl(0.2,15).toFixed(1),time:ri(1,86400),hit:Math.random()>.3,ca:t.ca})}
+    return{name,handle:handles[i],init:name[0],color:hsl(name),followers:ri(5,800)+'K',bio:BIOS[i%BIOS.length],
+      calls:calls.sort((a,b)=>b.pc-a.pc),hitRate:Math.round(calls.filter(c=>c.hit).length/calls.length*100),
+      totalCalls:ri(50,500),totalPnl:ri(10,200)+'SOL',avgReturn:+rfl(-10,120).toFixed(0),
+      online:Math.random()>.3,lastActive:ri(1,3600),pnl7d:+rfl(-20,300).toFixed(0),signalStrength:ri(30,100)};
+  });
+}
+
+function score(t){let s=50;s+=Math.min(t.kols.length*10,40);s+=Math.min(t.smartW*1.5,25);s+=Math.min(t.whales*3,15);s+=Math.min(t.snipers*1,8);s+=Math.min(t.holders/150,10);s+=t.lpL?6:-8;s+=t.oSrc?3:-5;if(t.hp)s-=40;s-=t.devRugs*10;s-=Math.max(0,t.devWallet-5)*2;s-=t.buyT*2;s-=t.sellT*1.5;if(t.devDeploys>=5&&t.devRugs===0)s+=8;s+=Math.min(t.buys/800,5);return Math.max(0,Math.min(100,Math.round(s)))}
+function devSt(t){return t.devRugs>2?'risky':t.devRugs>0?'warn':'clean'}
+
+// ═══ VIEW SWITCH ═══
+function switchView(el){
+  document.querySelectorAll('.th-tab').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');currentView=el.dataset.view;
+  document.querySelectorAll('.panel-view').forEach(v=>v.classList.remove('active'));
+  $('view-'+currentView).classList.add('active');
+  $('leftPanel').style.display=currentView==='scanner'?'':'none';
+  $('scannerTools').style.display=currentView==='scanner'?'flex':'none';
+  if(currentView==='trending')renderTrending();
+  if(currentView==='smartmoney')renderSmartMoney();
+  if(currentView==='kols')renderKols();
+  if(currentView==='wallets'){renderWalletList();if(selectedWallet)renderWalletDetail(selectedWallet)}
+}
+
+// ═══ SCANNER ═══
+function filtered(){
+  return tokens.filter(t=>{
+    if(t.kols.length<parseInt($('fK').value))return false;if(t.smartW<parseInt($('fS').value))return false;if(t.snipers<parseInt($('fSn').value))return false;if(score(t)<parseInt($('fSc').value))return false;
+    if($('fDC').checked&&devSt(t)!=='clean')return false;if($('fDR').checked&&t.devRugs>0)return false;if($('fDE').checked&&t.devDeploys<5)return false;
+    if($('fHP').checked&&t.hp)return false;if($('fLP').checked&&!t.lpL)return false;if($('fMT').checked&&t.mint)return false;
+    if($('fTX').checked&&(t.buyT>0||t.sellT>0))return false;if($('fDW').checked&&t.devWallet>=5)return false;
+    if($('tSafe').classList.contains('on')&&(t.hp||!t.lpL||t.mint))return false;
+    if($('tKol').classList.contains('on')&&t.kols.length===0)return false;
+    if(selD!=='all'&&t.dex!==selD)return false;return true;
+  });
+}
+
+function renderScanner(){
+  const list=filtered().sort((a,b)=>score(b)-score(a));$('rCnt').textContent=list.length+' pairs';
+  const tb=$('tb');
+  if(!list.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--t4)">No tokens match current filters</td></tr>';return}
+  tb.innerHTML=list.map((t,i)=>{
+    const sc=score(t),scC=sc>=70?'var(--green)':sc>=45?'var(--yellow)':'var(--red)';const scO=94.2-(sc/100)*94.2;const isNew=(Date.now()-t.deployed)<600000;const flC=isNew?'hot':(Date.now()-t.deployed)<3600000?'warm':'cool';const dS=devSt(t);const smP=Math.min(t.smartW/40*100,100),smC=t.smartW>=15?'var(--green)':t.smartW>=5?'var(--cyan)':'var(--t4)';const pC=t.pc5>0?'up':t.pc5<0?'down':'flat';
+    let kols=t.kols.slice(0,4).map(k=>`<div class="kd" style="background:${k.color}" title="${esc(k.name)}">${k.init}</div>`).join('');if(t.kols.length>4)kols+=`<span class="kp">+${t.kols.length-4}</span>`;if(!t.kols.length)kols='<span style="font-size:11px;color:var(--t4)">—</span>';
+    const ti=tokens.indexOf(t);
+    return`<tr class="row" onclick="openTokenModal(${ti})"><td style="position:relative"><div class="fl ${flC}"></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);padding-left:6px">${i+1}</span></td><td><div class="tc" style="align-items:flex-start"><div class="ta" style="background:${t.color}">${t.sym.charAt(0)}</div><div class="tr2"><div class="ts">${esc(t.sym)} ${isNew?'<span class="badge new">NEW</span>':''}</div><div class="tp"><span class="dex ${t.dex==='pump.fun'?'pump':t.dex}">${t.dex}</span></div><div class="ca-wrap" style="margin-top:2px"><span class="ca-text" onclick="copyCA('${t.ca}','${t.sym}',event)">${trunc(t.ca,8)}</span><button class="copy-btn" onclick="copyCA('${t.ca}','${t.sym}',event)">${copySVG} Copy</button></div></div></div></td><td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t2)">${ago(t.deployed)}</span></td><td><span class="badge ${dS}">${dS.toUpperCase()}</span><br><span style="font-size:10px;color:var(--t4)">${t.devDeploys} dep</span></td><td><div class="kols">${kols}</div></td><td class="r"><div class="sm-c"><span class="sm-n" style="color:${smC}">${t.smartW}</span><div class="sm-b"><div class="sm-f" style="width:${smP}%;background:${smC}"></div></div></div></td><td class="r"><span style="font-family:'JetBrains Mono',monospace;font-size:12px">${fmtP(t.price)}</span></td><td class="r"><span class="pc ${pC}">${t.pc5>0?'+':''}${t.pc5}%</span></td><td class="r"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2)">${fmt$(t.liq)}</span></td><td class="r"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2)">${fmt$(t.mcap)}</span></td><td class="r"><span style="font-family:'JetBrains Mono',monospace;font-size:12px">${t.holders}</span></td><td class="r"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><svg width="32" height="32" viewBox="0 0 36 36" style="transform:rotate(-90deg)"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--bg5)" stroke-width="2.5"/><circle cx="18" cy="18" r="15" fill="none" stroke="${scC}" stroke-width="2.5" stroke-dasharray="94.2" stroke-dashoffset="${scO}" stroke-linecap="round"/></svg><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${scC};position:relative;right:22px">${sc}</span></div></td></tr>`}).join('');
+}
+
+// ═══ TRENDING ═══
+function renderTrending(btn){
+  if(btn){btn.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on')}
+  const sorted=[...tokens].sort((a,b)=>{if(trendSort==='hot')return(b.kols.length*10+b.smartW*3+parseFloat(b.pc5))-(a.kols.length*10+a.smartW*3+parseFloat(a.pc5));if(trendSort==='vol')return b.vol24h-a.vol24h;if(trendSort==='gainers')return parseFloat(b.pc5)-parseFloat(a.pc5);return b.holders-a.holders});
+  $('trendCnt').textContent=sorted.length+' tokens';
+  $('trendGrid').innerHTML=sorted.map((t,i)=>{
+    const sc=score(t),scC=sc>=70?'var(--green)':sc>=45?'var(--yellow)':'var(--red)';const pC=t.pc5>0?'up':t.pc5<0?'down':'flat';const barW=Math.min(100,Math.max(5,Math.round((parseFloat(t.pc5)+50)/130*100+t.kols.length*5+t.smartW*2)));
+    return`<div class="tc-card" onclick="openTokenModal(${tokens.indexOf(t)})"><div class="tc-rank">${i+1}</div><div class="tc-card-top"><div class="ta" style="background:${t.color};width:36px;height:36px;font-size:13px">${t.sym.charAt(0)}</div><div><div class="sym">${esc(t.sym)}</div><div class="name">${esc(t.name)} · ${t.dex}</div></div></div><div class="tc-ca"><span class="ca-text" onclick="copyCA('${t.ca}','${t.sym}',event)">${trunc(t.ca,8)}</span><button class="copy-btn" onclick="copyCA('${t.ca}','${t.sym}',event)" style="opacity:.6;pointer-events:auto">${copySVG} Copy</button></div><div class="tc-metrics"><div class="tc-m"><span class="tc-ml">Price</span><span class="tc-mv">${fmtP(t.price)}</span></div><div class="tc-m"><span class="tc-ml">5m</span><span class="tc-mv pc ${pC}">${t.pc5>0?'+':''}${t.pc5}%</span></div><div class="tc-m"><span class="tc-ml">MCap</span><span class="tc-mv">${fmt$(t.mcap)}</span></div><div class="tc-m"><span class="tc-ml">Vol 24h</span><span class="tc-mv">${fmt$(t.vol24h)}</span></div><div class="tc-m"><span class="tc-ml">Holders</span><span class="tc-mv">${t.holders}</span></div><div class="tc-m"><span class="tc-ml">KOLs</span><span class="tc-mv" style="color:${t.kols.length?'var(--purple)':'var(--t4)'}">${t.kols.length}</span></div><div class="tc-m"><span class="tc-ml">Smart $</span><span class="tc-mv" style="color:${t.smartW>=5?'var(--cyan)':'var(--t4)'}">${t.smartW}</span></div><div class="tc-m"><span class="tc-ml">Score</span><span class="tc-mv" style="color:${scC}">${sc}</span></div></div><div class="tc-bar"><div class="tc-bar-fill" style="width:${barW}%;background:var(--green)"></div></div></div>`}).join('');
+}
+
+// ═══ SMART MONEY ═══
+function renderSmartMoney(btn){
+  if(btn){btn.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on')}
+  const sorted=[...smartWallets].sort((a,b)=>{if(smSort==='pnl')return b.totalPnl-a.totalPnl;if(smSort==='win')return(b.wins/b.total)-(a.wins/a.total);if(smSort==='recent')return b.buys.length-a.buys.length;return b.totalSol-a.totalSol});
+  $('smCnt').textContent=sorted.length+' wallets';
+  $('smGrid').innerHTML=sorted.map(w=>{const winRate=Math.round(w.wins/w.total*100);const pnlC=w.totalPnl>=0?'var(--green)':'var(--red)';
+    return`<div class="sm-card"><div class="smc-top"><div class="smc-av" style="background:${w.tagColor}">${w.name.charAt(0)}</div><div class="smc-info"><div><span class="smc-name">${w.name}</span><span class="smc-tag ${w.tag}">${w.tag.toUpperCase()}</span></div><div class="smc-addr">${w.name}</div></div></div><div class="smc-stats"><div class="smc-stat"><div class="smc-sl">Win Rate</div><div class="smc-sv" style="color:${winRate>=60?'var(--green)':winRate>=40?'var(--yellow)':'var(--red)'}">${winRate}%</div></div><div class="smc-stat"><div class="smc-sl">Total PnL</div><div class="smc-sv" style="color:${pnlC}">${w.totalPnl>0?'+':''}${w.totalPnl}S</div></div><div class="smc-stat"><div class="smc-sl">Trades</div><div class="smc-sv">${w.total}</div></div><div class="smc-stat"><div class="smc-sl">Best</div><div class="smc-sv" style="color:var(--green)">${w.bestTrade}</div></div></div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:6px">Recent Trades</div><div class="smc-buys">${w.buys.slice(0,4).map(b=>`<div class="smc-buy"><div style="width:18px;height:18px;border-radius:50%;background:${b.color};display:grid;place-items:center;font-size:8px;font-weight:800;color:#fff;flex-shrink:0">${b.sym.charAt(0)}</div><div style="flex:1;min-width:0"><div class="tk">${b.sym}</div><div class="smc-ca"><span class="ca-text" style="font-size:9px" onclick="copyCA('${b.ca}','${b.sym}',event)">${trunc(b.ca,6)}</span></div></div><span class="sol">${b.sol}S</span><span class="pnl ${b.pnl>=0?'up':'down'}">${b.pnl>0?'+':''}${b.pnl}%</span><span class="ago">${ago(Date.now()-b.time*1000)}</span></div>`).join('')}</div></div>`}).join('');
+}
+
+// ═══ KOLS ═══
+function renderKols(btn){
+  if(btn){btn.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on')}
+  const sorted=[...kols].sort((a,b)=>{if(kolSort==='active')return b.calls.length-a.calls.length;if(kolSort==='accurate')return b.hitRate-a.hitRate;if(kolSort==='followers')return parseInt(b.followers)-parseInt(a.followers);return b.lastActive-a.lastActive});
+  $('kolCnt').textContent=sorted.length+' KOLs';
+  $('kolGrid').innerHTML=sorted.map(k=>{const heat=k.calls.length>=20?'hot':k.calls.length>=10?'warm':'mid';
+    return`<div class="kol-card ${heat}"><div class="kc-top"><div class="kc-av" style="background:${k.color}">${k.init}<div class="kc-dot ${k.online?'online':'offline'}"></div></div><div class="kc-info"><div class="kc-name">${esc(k.name)}</div><div class="kc-handle">${k.handle} · ${k.followers} followers</div></div></div><div class="kc-stats"><div class="kc-stat"><div class="kc-stat-label">Hit Rate</div><div class="kc-stat-val" style="color:${k.hitRate>=70?'var(--green)':k.hitRate>=50?'var(--yellow)':'var(--red)'}">${k.hitRate}%</div></div><div class="kc-stat"><div class="kc-stat-label">Calls</div><div class="kc-stat-val">${k.calls.length}</div></div><div class="kc-stat"><div class="kc-stat-label">Avg Return</div><div class="kc-stat-val" style="color:${k.avgReturn>=0?'var(--green)':'var(--red)'}">${k.avgReturn>0?'+':''}${k.avgReturn}%</div></div></div><div class="kc-bar"><div class="kc-bar-seg" style="width:${k.hitRate}%;background:var(--green);border-radius:2px 0 0 2px"></div><div class="kc-bar-seg" style="width:${100-k.hitRate}%;background:var(--red);border-radius:0 2px 2px 0"></div></div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin:8px 0 5px">Top Calls</div><div class="kc-tokens">${k.calls.slice(0,4).map(c=>`<div class="kc-token"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.hit?'var(--green)':'var(--red)'};flex-shrink:0"></span><span style="font-weight:700">${c.sym}</span><span class="pct ${c.pc>=0?'up':'down'}">${c.pc>0?'+':''}${c.pc}%</span><span class="tk-ca" style="flex:1;text-align:right"><span class="ca-text" style="font-size:9px" onclick="copyCA('${c.ca}','${c.sym}',event)">${trunc(c.ca,4)}</span></span><button class="copy-btn" style="opacity:.5;pointer-events:auto" onclick="copyCA('${c.ca}','${c.sym}',event)">${copySVG}</button></div>`).join('')}</div><div class="kc-bio">${esc(k.bio)} · Active ${ago(Date.now()-k.lastActive*1000)} ago</div></div>`}).join('');
+}
+
+// ═══ WALLET TRACKER ═══
+function genWalletData(addr){
+  // Generate mock on-chain data for a wallet address
+  const totalTrades=ri(20,200);const winRate=ri(25,78);const wins=Math.round(totalTrades*winRate/100);
+  const totalPnL=+rfl(-50,500).toFixed(1);const avgHold=ri(5,480);const bestTrade=ri(30,800);
+  const totalVol=+rfl(5,800).toFixed(1);const lastActive=ri(1,86400);
+  const nTrades=ri(8,15);
+  const trades=[];
+  const usedT=new Set();
+  for(let i=0;i<nTrades;i++){
+    let ti;do{ti=ri(0,Math.max(0,tokens.length-1))}while(usedT.has(ti)&&usedT.size<tokens.length);usedT.add(ti);
+    const t=tokens[ti]||{sym:'UNKNOWN',color:'#888',ca:rstr(44),price:0.001};
+    const isBuy=Math.random()>.35;const sol=+rfl(0.1,30).toFixed(2);const pnl=isBuy?+rfl(-60,400).toFixed(0):null;
+    trades.push({side:isBuy?'buy':'sell',sym:t.sym,color:t.color,ca:t.ca,sol,pnl,time:ri(1,lastActive),price:t.price});
+  }
+  trades.sort((a,b)=>a.time-b.time);
+
+  // Token breakdown
+  const tokenMap={};
+  trades.forEach(tr=>{if(!tokenMap[tr.sym])tokenMap[tr.sym]={sym:tr.sym,color:tr.color,ca:tr.ca,buys:0,sells:0,totalSol:0};tokenMap[tr.sym][tr.side==='buy'?'buys':'sells']++;tokenMap[tr.sym].totalSol+=tr.sol});
+  const tokenBreakdown=Object.values(tokenMap).sort((a,b)=>b.totalSol-a.totalSol).slice(0,6);
+
+  return{totalTrades,wins,winRate,totalPnL,avgHold:avgHold+'m',bestTrade:'+'+bestTrade+'%',totalVol,lastActive,trades,tokenBreakdown,createdAt:Date.now()};
+}
+
+function addWallet(){
+  const input=$('wtInput');const addr=input.value.trim();
+  if(!addr||addr.length<10){showToast('Enter a valid address');input.focus();return}
+  if(trackedWallets.find(w=>w.addr===addr)){showToast('Wallet already tracked');return}
+  const w={addr,label:'Wallet '+rstr(4),addedAt:Date.now(),color:hsl(addr)};
+  trackedWallets.push(w);
+  if(!walletDataCache[addr])walletDataCache[addr]=genWalletData(addr);
+  saveWallets();input.value='';renderWalletList();selectWallet(addr);
+  showToast('Wallet added!');
+}
+
+function removeWallet(addr){
+  $('wtConfirmAddr').textContent=trunc(addr,10);
+  $('wtConfirm').classList.add('open');
+  $('wtConfirmBtn').onclick=()=>{
+    trackedWallets=trackedWallets.filter(w=>w.addr!==addr);
+    delete walletDataCache[addr];
+    if(selectedWallet===addr){selectedWallet=null;$('wtDetail').innerHTML=emptyDetail()}
+    saveWallets();renderWalletList();closeConfirm();showToast('Wallet removed');
+  };
+}
+function closeConfirm(){$('wtConfirm').classList.remove('open')}
+
+function selectWallet(addr){
+  selectedWallet=addr;renderWalletList();renderWalletDetail(addr);
+}
+
+function renderWalletList(btn){
+  if(btn){btn.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on')}
+  $('wtCnt').textContent=trackedWallets.length+' wallet'+(trackedWallets.length!==1?'s':'');
+
+  let sorted=[...trackedWallets];
+  sorted.forEach(w=>{if(!walletDataCache[w.addr])walletDataCache[w.addr]=genWalletData(w.addr)});
+  sorted.sort((a,b)=>{
+    const da=walletDataCache[a.addr],db=walletDataCache[b.addr];
+    if(wtSort==='pnl')return(db?.totalPnL||0)-(da?.totalPnL||0);
+    if(wtSort==='winrate')return(db?.winRate||0)-(da?.winRate||0);
+    return b.addedAt-a.addedAt;
+  });
+
+  if(!sorted.length){
+    $('wtList').innerHTML=`<div class="wt-empty"><div class="wt-empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="7" cy="15" r="1.5"/></svg></div><div class="wt-empty-t">No wallets yet</div><div class="wt-empty-s">Paste a Solana wallet address above to start tracking trades, PnL, and activity.</div></div>`;
+    return;
+  }
+
+  $('wtList').innerHTML=sorted.map(w=>{
+    const d=walletDataCache[w.addr];const isSel=selectedWallet===w.addr;
+    const pnlC=d.totalPnL>=0?'up':'down';
+    return`<div class="wt-item${isSel?' sel':''}" onclick="selectWallet('${w.addr}')">
+      <div class="wt-item-av" style="background:${w.color}">${w.addr.charAt(0).toUpperCase()}<div class="wt-status-dot active"></div></div>
+      <div class="wt-item-info">
+        <div class="wt-item-addr">${trunc(w.addr,8)}</div>
+        <div class="wt-item-meta">
+          <span class="wt-item-tag manual">MANUAL</span>
+          <span class="wt-item-pnl ${pnlC}">${d.totalPnL>0?'+':''}${d.totalPnL} SOL</span>
+          <span class="wt-item-wr">${d.winRate}% WR</span>
+        </div>
+      </div>
+      <div class="wt-item-actions">
+        <button class="wt-item-btn" onclick="event.stopPropagation();copyCA('${w.addr}','wallet',event)" title="Copy address">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M3 10V3.5A1.5 1.5 0 0 1 4.5 2H11"/></svg>
+        </button>
+        <button class="wt-item-btn" onclick="event.stopPropagation();refreshWallet('${w.addr}')" title="Refresh data">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 0 1 10.3-4.2M14 8a6 6 0 0 1-10.3 4.2"/><path d="M14 2v4h-4M2 14v-4h4"/></svg>
+        </button>
+        <button class="wt-item-btn danger" onclick="event.stopPropagation();removeWallet('${w.addr}')" title="Remove">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M6 4V3h4v1M5 4v8.5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V4"/></svg>
+        </button>
+      </div>
+    </div>`}).join('');
+}
+
+function refreshWallet(addr){
+  walletDataCache[addr]=genWalletData(addr);saveWallets();renderWalletList();
+  if(selectedWallet===addr)renderWalletDetail(addr);
+  showToast('Data refreshed');
+}
+
+function emptyDetail(){return `<div class="wt-empty"><div class="wt-empty-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div><div class="wt-empty-t">No wallet selected</div><div class="wt-empty-s">Add a wallet address using the input above, then click it to view trades, PnL, and activity.</div></div>`}
+
+function renderWalletDetail(addr){
+  const w=trackedWallets.find(x=>x.addr===addr);const d=walletDataCache[addr];
+  if(!w||!d){$('wtDetail').innerHTML=emptyDetail();return}
+
+  const pnlC=d.totalPnL>=0?'var(--green)':'var(--red)';
+  const wrC=d.winRate>=60?'var(--green)':d.winRate>=40?'var(--yellow)':'var(--red)';
+
+  $('wtDetail').innerHTML=`
+    <div class="wd-header">
+      <div class="wd-av" style="background:${w.color}">${addr.charAt(0).toUpperCase()}</div>
+      <div class="wd-info">
+        <div class="wd-label">Tracked Wallet</div>
+        <div class="wd-addr">
+          <span class="wd-addr-text">${addr}</span>
+          <button class="copy-vis" onclick="copyCA('${addr}','wallet',event)">${copySVG} Copy</button>
+        </div>
+        <div class="wd-meta">
+          <span class="wd-chip">Added ${ago(w.addedAt)} ago</span>
+          <span class="wd-chip">Active ${ago(Date.now()-d.lastActive*1000)} ago</span>
+          <a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener" class="wd-chip" style="color:var(--cyan);text-decoration:none;cursor:pointer">View on Solscan</a>
+          <a href="https://gmgn.ai/sol/address/${addr}" target="_blank" rel="noopener" class="wd-chip" style="color:var(--purple);text-decoration:none;cursor:pointer">GMGN Profile</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="wd-stats">
+      <div class="wd-stat"><div class="wd-stat-label">Total PnL</div><div class="wd-stat-val" style="color:${pnlC}">${d.totalPnL>0?'+':''}${d.totalPnL} SOL</div><div class="wd-stat-sub">All time</div></div>
+      <div class="wd-stat"><div class="wd-stat-label">Win Rate</div><div class="wd-stat-val" style="color:${wrC}">${d.winRate}%</div><div class="wd-stat-sub">${d.wins}W / ${d.totalTrades-d.wins}L</div></div>
+      <div class="wd-stat"><div class="wd-stat-label">Total Trades</div><div class="wd-stat-val">${d.totalTrades}</div><div class="wd-stat-sub">Across all tokens</div></div>
+      <div class="wd-stat"><div class="wd-stat-label">Total Volume</div><div class="wd-stat-val">${d.totalVol} SOL</div><div class="wd-stat-sub">~$${Math.round(d.totalVol*180).toLocaleString()}</div></div>
+      <div class="wd-stat"><div class="wd-stat-label">Best Trade</div><div class="wd-stat-val" style="color:var(--green)">${d.bestTrade}</div><div class="wd-stat-sub">Single trade return</div></div>
+      <div class="wd-stat"><div class="wd-stat-label">Avg Hold</div><div class="wd-stat-val">${d.avgHold}</div><div class="wd-stat-sub">Time in position</div></div>
+    </div>
+
+    <div class="wd-section">
+      <div class="wd-section-t">Token Breakdown</div>
+      ${d.tokenBreakdown.map(t=>`<div class="wd-trade">
+        <div class="wd-trade-icon" style="background:${t.color}">${t.sym.charAt(0)}</div>
+        <div class="wd-trade-info">
+          <div class="wd-trade-tk">${t.sym}</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:1px">
+            <span class="ca-text" style="font-size:9px" onclick="copyCA('${t.ca}','${t.sym}',event)">${trunc(t.ca,6)}</span>
+            <button class="copy-btn" style="opacity:.5;pointer-events:auto" onclick="copyCA('${t.ca}','${t.sym}',event)">${copySVG}</button>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700">${t.totalSol.toFixed(1)} SOL</div>
+          <div style="font-size:10px;color:var(--t3)">${t.buys} buys · ${t.sells} sells</div>
+        </div>
+      </div>`).join('')}
+    </div>
+
+    <div class="wd-section">
+      <div class="wd-section-t">Recent Trades <span class="th-cnt">${d.trades.length} trades</span></div>
+      ${d.trades.map(tr=>`<div class="wd-trade">
+        <span class="wd-trade-side ${tr.side}">${tr.side}</span>
+        <div class="wd-trade-icon" style="background:${tr.color};width:24px;height:24px;font-size:10px">${tr.sym.charAt(0)}</div>
+        <div class="wd-trade-info">
+          <div class="wd-trade-tk">${tr.sym}</div>
+          <div class="wd-trade-amount">${tr.sol} SOL @ ${fmtP(tr.price)}</div>
+        </div>
+        <div class="wd-trade-right">
+          ${tr.pnl!==null?`<div class="wd-trade-pnl" style="color:${tr.pnl>=0?'var(--green)':'var(--red)'}">${tr.pnl>0?'+':''}${tr.pnl}%</div>`:''}
+          <div class="wd-trade-time">${ago(Date.now()-tr.time*1000)} ago</div>
+        </div>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+// ═══ MODAL ═══
+function openTokenModal(idx){
+  const t=tokens[idx];if(!t)return;
+  const sc=score(t),scC=sc>=70?'var(--green)':sc>=45?'var(--yellow)':'var(--red)';
+  let kols=t.kols.map(k=>`<div class="mki"><div class="mka" style="background:${k.color}">${k.init}</div><div><div class="mkn">${esc(k.name)}</div><div class="mkf">${k.followers} followers</div></div><div class="mkoa"><div class="mks">${k.sol} SOL</div><div class="mkp">@ ${fmtP(k.price)}</div></div></div>`).join('');
+  if(!t.kols.length)kols='<div style="color:var(--t4);font-size:12px;padding:10px 0">No KOL buys detected yet</div>';
+  const chks=[['KOL Buys',t.kols.length>=2,t.kols.length+' buying'],['Smart Wallets',t.smartW>=5,t.smartW+' active'],['Whale Activity',t.whales>=2,t.whales+' whales'],['Snipers Detected',t.snipers>=1,t.snipers+' snipers'],['Dev Clean',t.devRugs===0&&devSt(t)==='clean',devSt(t)],['Experienced Dev',t.devDeploys>=5,t.devDeploys+' deploys'],['Contract Open Source',t.oSrc],['Not a Honeypot',!t.hp],['LP Burned / Locked',t.lpL],['Mint Authority Disabled',!t.mint],['Dev Wallet &lt;5%',t.devWallet<5,t.devWallet+'%'],['No Buy Tax',t.buyT===0,t.buyT+'%'],['No Sell Tax',t.sellT===0,t.sellT+'%'],['Top 10 &lt;30%',t.top10<0.3,(t.top10*100).toFixed(1)+'%']];
+  $('mbox').innerHTML=`<div class="mh"><div style="display:flex;align-items:center;gap:12px"><div class="ta" style="background:${t.color};width:42px;height:42px;font-size:16px">${t.sym.charAt(0)}</div><div><div style="font-size:20px;font-weight:800">${esc(t.sym)} <span style="color:var(--t2);font-weight:400;font-size:14px">${esc(t.name)}</span></div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="dex ${t.dex==='pump.fun'?'pump':t.dex}">${t.dex}</span><span style="font-size:10px;color:var(--t3)">${ago(t.deployed)} ago</span></div></div></div><button class="mc" onclick="closeM()">✕</button></div><div class="mb"><div class="modal-ca-bar"><span class="ca-full">${t.ca}</span><button class="copy-vis" onclick="copyCA('${t.ca}','${t.sym}',event)">${copySVG} Copy Contract</button></div><div class="modal-links"><button class="modal-link" onclick="showToast('Would open Solscan')">Solscan</button><button class="modal-link" onclick="showToast('Would open DexScreener')">DexScreener</button><button class="modal-link" onclick="showToast('Would open Birdeye')">Birdeye</button><button class="modal-link" onclick="showToast('Would open DEX')">Trade</button></div><div class="mg"><div class="ms"><div class="msl">Score</div><div class="msv" style="color:${scC}">${sc}/100</div></div><div class="ms"><div class="msl">Price</div><div class="msv">${fmtP(t.price)}</div></div><div class="ms"><div class="msl">Market Cap</div><div class="msv">${fmt$(t.mcap)}</div></div><div class="ms"><div class="msl">Liquidity</div><div class="msv">${fmt$(t.liq)}</div></div><div class="ms"><div class="msl">24h Volume</div><div class="msv">${fmt$(t.vol24h)}</div></div><div class="ms"><div class="msl">Holders</div><div class="msv">${t.holders.toLocaleString()}</div></div><div class="ms"><div class="msl">Buys / Sells</div><div class="msv">${t.buys} / ${t.sells}</div></div><div class="ms"><div class="msl">Smart Wallets</div><div class="msv" style="color:${t.smartW>=5?'var(--cyan)':'inherit'}">${t.smartW}</div></div><div class="ms"><div class="msl">Dev Wallet</div><div class="msv">${t.devWallet}%</div></div></div><div class="mst">KOL Activity</div><div>${kols}</div><div class="mst">Safety & Signal Checks</div><ul class="chk-list">${chks.map(c=>`<li><span class="ci ${c[1]?'pass':'fail'}">${c[1]?'✓':'✕'}</span><span>${c[0]}</span>${c[2]!==undefined?`<span style="margin-left:4px;font-size:10px;color:var(--t3)">${c[2]}</span>`:''}<span class="ct ${c[1]?'pass':'fail'}">${c[1]?'PASS':'FAIL'}</span></li>`).join('')}</ul></div>`;
+  $('mbg').classList.add('open');
+}
+function closeM(){$('mbg').classList.remove('open')}
+
+// ═══ SCAN ═══
+function doScan(){
+  const btn=$('scanBtn');btn.disabled=true;btn.textContent='SCANNING...';
+  setTimeout(()=>{btn.textContent='Fetching pairs...'},300);
+  setTimeout(()=>{btn.textContent='Enriching data...'},800);
+  setTimeout(()=>{genTokens();genSmartWallets();genKols();btn.textContent='Rendering...';
+    setTimeout(()=>{renderScanner();renderRightPanel();if(currentView==='trending')renderTrending();if(currentView==='smartmoney')renderSmartMoney();if(currentView==='kols')renderKols();btn.disabled=false;btn.textContent='SCAN NOW'},200);
+  },1200);
+}
+
+function renderRightPanel(){
+  const feed=[...tokens].sort((a,b)=>b.deployed-a.deployed).slice(0,6);
+  $('feed').innerHTML=feed.map(t=>`<div class="alert ${t.kols.length?'buy':'info'}"><strong>${esc(t.sym)}</strong> ${t.kols.length?t.kols.length+' KOLs buying':'New pair'}<div class="alert-t">${ago(t.deployed)} ago · ${t.dex}</div></div>`).join('');
+  const top=[...tokens].sort((a,b)=>score(b)-score(a)).slice(0,6);
+  $('tops').innerHTML=top.map(t=>{const sc=score(t),c=sc>=70?'var(--green)':sc>=45?'var(--yellow)':'var(--red)';return`<div class="rpi" onclick="openTokenModal(${tokens.indexOf(t)})"><div class="rpn"><div style="width:20px;height:20px;border-radius:50%;background:${t.color};display:grid;place-items:center;font-size:9px;font-weight:800;color:#fff">${t.sym.charAt(0)}</div>${esc(t.sym)}</div><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${c}">${sc}</span></div>`}).join('');
+  $('kolAlerts').innerHTML=kols.filter(k=>k.online).slice(0,4).map(k=>{const tc=k.calls[0];return`<div class="alert buy"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><div style="width:18px;height:18px;border-radius:50%;background:${k.color};display:grid;place-items:center;font-size:8px;font-weight:800;color:#fff">${k.init}</div><strong>${esc(k.name)}</strong></div>Called ${tc?.sym||'—'} <span style="color:${tc?.pc>=0?'var(--green)':'var(--red)'}">(${tc?.pc>0?'+':''}${tc?.pc}%)</span><div class="alert-t">${k.followers} followers · ${k.hitRate}% hit rate</div></div>`}).join('');
+}
+
+// ═══ MISC ═══
+function setT(el){tMin=+el.dataset.t;el.parentElement.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');if(tokens.length)renderScanner()}
+function ck(el){el.parentElement.querySelectorAll('.chain-opt').forEach(b=>b.classList.remove('on'));el.classList.add('on')}
+document.querySelectorAll('#dexP .pill').forEach(p=>p.onclick=function(){selD=this.dataset.d;document.querySelectorAll('#dexP .pill').forEach(x=>x.classList.remove('on'));this.classList.add('on');$('dexN').textContent=selD==='all'?'All':selD;if(tokens.length)renderScanner()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeM();closeConfirm()}});
+
+// ═══ INIT ═══
+loadWallets();
+genTokens();genSmartWallets();genKols();renderScanner();renderRightPanel();renderWalletList();
+</script>
+</body>
+</html>
