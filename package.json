@@ -1,0 +1,12 @@
+{
+  "name": "gmgn-scanner",
+  "version": "1.0.0",
+  "description": "Token scanner & wallet tracker — prototype",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "npx serve public -l 3000 --cors"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
