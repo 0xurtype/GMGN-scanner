@@ -451,7 +451,11 @@ async def scan_smart_wallets():
     # Detect signals after aggregation
     new_signals = detect_signals()
     if new_signals:
-        asyncio.create_task(send_tg_alert(new_signals))
+        try:
+            await send_tg_alert(new_signals)
+        except Exception as e:
+            print(f'[tg-alert] ERROR in scan_smart_wallets: {e}')
+            import traceback; traceback.print_exc()
 
 
 async def smart_wallet_loop():
@@ -695,6 +699,7 @@ async def send_tg_alert(signals: list[dict]):
         })
 
         try:
+            print(f'[tg-alert] Sending batch of {len(batch)} signals...')
             req = urllib.request.Request(url, data=payload.encode(), headers={'Content-Type': 'application/json'})
             urllib.request.urlopen(req, timeout=10)
             print(f'[tg-alert] Sent {len(batch)} signals')
