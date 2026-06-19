@@ -195,6 +195,46 @@ tr.row td.r{text-align:right}
 .st-buy-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,230,118,.35)}
 .st-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--t4)}
 .st-empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+
+/* ═══ SIGNALS / ACCUMULATION WATCH ═══ */
+.sig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;padding:14px;overflow-y:auto;flex:1}
+.sig-card{background:linear-gradient(135deg,var(--bg3),rgba(20,20,30,.8));border:1px solid var(--bdr);border-radius:12px;padding:14px;transition:all .2s;position:relative;overflow:hidden}
+.sig-card:hover{border-color:var(--cyan-b);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.sig-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sig-card.accumulation::before{background:linear-gradient(90deg,#ff6b35,#ff4444)}
+.sig-card.large_buy::before{background:linear-gradient(90deg,var(--green),#00cc88)}
+.sig-card.concentration::before{background:linear-gradient(90deg,#a855f7,var(--cyan))}
+.sig-type-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;border-radius:6px;margin-bottom:8px}
+.sig-type-badge.accumulation{background:rgba(255,107,53,.15);color:#ff6b35}
+.sig-type-badge.large_buy{background:rgba(0,230,118,.15);color:var(--green)}
+.sig-type-badge.concentration{background:rgba(168,85,247,.15);color:#a855f7}
+.sig-confidence{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-left:8px}
+.sig-confidence.high{background:rgba(0,230,118,.15);color:var(--green)}
+.sig-confidence.mid{background:rgba(255,200,0,.15);color:var(--yellow)}
+.sig-confidence.low{background:rgba(255,255,255,.08);color:var(--t3)}
+.sig-token{font-size:18px;font-weight:800;margin:8px 0 4px}
+.sig-token-full{font-size:12px;color:var(--t3);font-weight:400;margin-left:6px}
+.sig-ca{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t4);cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-bottom:10px}
+.sig-ca:hover{color:var(--cyan)}
+.sig-details{font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.4}
+.sig-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.sig-metric{text-align:center}
+.sig-metric-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700}
+.sig-metric-lbl{font-size:9px;color:var(--t4);margin-top:2px}
+.sig-wallets{margin-top:10px;border-top:1px solid rgba(255,255,255,.05);padding-top:8px}
+.sig-wallets-title{font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sig-wallet-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;border-radius:4px;margin:2px;background:rgba(255,255,255,.05);color:var(--t3);font-family:'JetBrains Mono',monospace}
+.sig-wallet-tag.smart_degen{background:rgba(0,230,118,.1);color:var(--green)}
+.sig-wallet-tag.kol{background:rgba(29,185,255,.1);color:var(--cyan)}
+.sig-actions{display:flex;gap:8px;margin-top:12px}
+.sig-buy-btn{flex:1;padding:8px;border-radius:8px;border:none;background:var(--green);color:#000;font-weight:700;font-size:12px;cursor:pointer;text-align:center;text-decoration:none}
+.sig-buy-btn:hover{opacity:.9;transform:translateY(-1px)}
+.sig-detail-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--t3);font-size:12px;cursor:pointer}
+.sig-detail-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.sig-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--t4)}
+.sig-empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+.sig-age{font-size:10px;color:var(--t4);margin-top:4px}
+
 /* ═══ SMART MONEY ═══ */
 .sm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px;padding:14px;overflow-y:auto;flex:1}
 .sm-card{background:linear-gradient(135deg,var(--bg3),rgba(20,20,30,.8));border:1px solid var(--bdr);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s}
@@ -425,6 +465,7 @@ tr.row td.r{text-align:right}
     <button class="th-tab on" data-view="scanner" onclick="switchView(this)">New Pairs</button>
     <!-- Trending tab removed -->
     <button class="th-tab" data-view="smartwallets" onclick="switchView(this)">Smart Wallets</button>
+    <button class="th-tab" data-view="signals" onclick="switchView(this)">⚡ Signals</button>
     <button class="th-tab" data-view="kols" onclick="switchView(this)">KOL Activity</button>
     <button class="th-tab" data-view="wallets" onclick="switchView(this)">Wallet Tracker</button>
   </div>
@@ -519,6 +560,21 @@ tr.row td.r{text-align:right}
     </div>
 
     <!-- KOL ACTIVITY -->
+    <!-- SIGNALS / ACCUMULATION WATCH -->
+    <div class="panel-view" id="view-signals">
+      <div class="tbl-head">
+        <div class="pill-row">
+          <button class="pill on" onclick="sigFilter='';renderSignals(this)">All</button>
+          <button class="pill" onclick="sigFilter='accumulation';renderSignals(this)">🔥 Accumulation</button>
+          <button class="pill" onclick="sigFilter='large_buy';renderSignals(this)">💰 Large Buy</button>
+          <button class="pill" onclick="sigFilter='concentration';renderSignals(this)">📊 Concentration</button>
+        </div>
+        <div class="th-r"><span class="th-cnt" id="sigCnt">—</span><div class="live-badge"><div class="dot"></div>SCANNING</div></div>
+      </div>
+      <div class="sig-grid" id="sigGrid"></div>
+    </div>
+
+    <!-- KOL ACTIVITY -->
     <div class="panel-view" id="view-kols">
       <div class="tbl-head">
         <div class="pill-row">
@@ -585,6 +641,7 @@ tr.row td.r{text-align:right}
 const $=id=>document.getElementById(id);
 let tokens=[],smartWallets=[],kols=[];
 let selD='all',tMin=5,trendSort='hot',smSort='pnl',kolSort='active',swSort='inflow',currentView='scanner';
+let sigFilter='';
 
 // ═══ WALLET TRACKER STATE ═══
 let trackedWallets=[];
@@ -672,6 +729,7 @@ async function loadLiveData(){
   renderScanner();
   renderRightPanel();
   if(currentView==='smartwallets')renderSmartTokens();
+  if(currentView==='signals')renderSignals();
   if(currentView==='kols')renderKols();
 }
 
@@ -731,6 +789,7 @@ function switchView(el){
   $('leftPanel').style.display=currentView==='scanner'?'':'none';
   $('scannerTools').style.display=currentView==='scanner'?'flex':'none';
   if(currentView==='smartwallets')renderSmartTokens();
+  if(currentView==='signals')renderSignals();
   if(currentView==='kols')renderKols();
   if(currentView==='wallets'){renderWalletList();if(selectedWallet)renderWalletDetail(selectedWallet)}
 }
@@ -820,6 +879,57 @@ function _renderSTCards(tokensList){
       return`<tr class="st-wallet-row"><td><div class="st-wallet-addr"><span style="color:var(--t2)">${wAddr}</span><button class="copy-btn" onclick="copyCA('${esc(w.address)}','wallet',event)">${copySVG}</button></div></td><td class="r">${wBal}</td><td class="r"><span style="color:var(--green)">${wBuys}</span>/<span style="color:var(--red)">${wSells}</span></td><td class="r"><span style="color:${wIPos?'var(--green)':'var(--red)'}">${_stInflow(wInflow)}</span></td><td><div class="st-wallet-action">${wAction}</div></td></tr>`;
     }).join('');
     return`<div class="st-card"><div class="st-header"><div class="st-icon" style="${iconStyle}">${iconContent}</div><div class="st-token-info"><div class="st-token-name"><span class="st-token-sym">${sym}</span><span class="st-token-full">${name}</span>${t.verified?'<span class="st-badge verified">✓ Verified</span>':''}</div><div class="st-ca-row"><span class="ca-text" onclick="copyCA('${esc(addr)}','${sym}',event)">${trunc(addr,8)}</span><button class="copy-btn" onclick="copyCA('${esc(addr)}','${sym}',event)">${copySVG} Copy</button></div></div><div class="st-right"><div class="st-inflow ${inflowPos?'pos':'neg'}">${_stInflow(inflow)}</div><div class="st-inflow-label">Smart Inflow 24h</div><span class="st-multiplier ${multClass}">${mult}</span></div></div><div class="st-metrics"><div class="st-metric"><div class="st-metric-icon">👥</div><div class="st-metric-val">${fmtN(holders)}</div><div class="st-metric-label">Holders</div></div><div class="st-metric"><div class="st-metric-icon">📊</div><div class="st-metric-val">${fmt$(vol)}</div><div class="st-metric-label">24h Volume</div></div><div class="st-metric"><div class="st-metric-icon">💎</div><div class="st-metric-val">${fmt$(mcap)}</div><div class="st-metric-label">Market Cap</div></div><div class="st-metric"><div class="st-metric-icon">📈</div><div class="st-metric-val pc ${pcClass}">${pc>0?'+':''}${pc.toFixed(1)}%</div><div class="st-metric-label">24h Change</div></div></div>${wallets.length?`<div class="st-wallets"><div class="st-wallets-title"><span>Smart Wallets (${wallets.length})</span></div><table class="st-wallet-table"><thead><tr><th>Wallet</th><th class="r">Bal</th><th class="r">24h TXS</th><th class="r">Inflow</th><th>Action</th></tr></thead><tbody>${walletRows}</tbody></table></div>`:''}<div class="st-actions"><button class="st-expand-btn" onclick="this.closest('.st-card').querySelector('.st-wallets').style.display=this.closest('.st-card').querySelector('.st-wallets').style.display==='none'?'':'none'">${wallets.length>4?'Expand All ('+wallets.length+')':'Details'}</button><a class="st-buy-btn" href="https://gmgn.ai/sol/token/${esc(addr)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">⚡ Buy</a></div></div>`;
+  }).join('');
+}
+
+// ═══ SIGNALS / ACCUMULATION WATCH ═══
+let sigCache=null,sigLastFetch=0;
+function renderSignals(btn){
+  if(btn){btn.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on')}
+  const now=Date.now()/1000;
+  if(!sigCache||now-sigLastFetch>15){
+    fetch(API+'/api/signals'+(sigFilter?'?signal_type='+sigFilter:''))
+      .then(r=>r.json()).then(d=>{
+        sigCache=d;sigLastFetch=now;
+        _renderSigCards(d.signals||[]);
+      }).catch(e=>{
+        console.error('signals fetch:',e);
+        _renderSigCards([]);
+      });
+  }else{
+    _renderSigCards(sigCache.signals||[]);
+  }
+}
+function _renderSigCards(signals){
+  const grid=$('sigGrid');const cnt=$('sigCnt');
+  if(!signals.length){
+    grid.innerHTML='<div class="sig-empty"><div class="sig-empty-icon">⚡</div><div>No signals yet<br><small style="color:var(--t4)">Monitoring smart wallet activity...<br>Signals appear when accumulation patterns are detected</small></div></div>';
+    cnt.textContent='0 signals';return;
+  }
+  cnt.textContent=signals.length+' signals';
+  grid.innerHTML=signals.map(s=>{
+    const confClass=s.confidence>=70?'high':s.confidence>=45?'mid':'low';
+    const confLabel=s.confidence>=70?'HIGH':s.confidence>=45?'MID':'LOW';
+    const addrShort=s.token_address.slice(0,6)+'...'+s.token_address.slice(-4);
+    const ageStr=s.age_hours<1?Math.round(s.age_hours*60)+'m':s.age_hours+'h';
+    const emoji_map={accumulation:'🔥',large_buy:'💰',concentration:'📊'};
+    const emoji=emoji_map[s.type]||'⚡';
+    const typeLabel=s.type.replace(/_/g,' ').toUpperCase();
+    
+    let metricsHTML='';
+    if(s.mcap)metricsHTML+=`<div class="sig-metric"><div class="sig-metric-val">$${fmtN(s.mcap)}</div><div class="sig-metric-lbl">MCap</div></div>`;
+    if(s.total_usd)metricsHTML+=`<div class="sig-metric"><div class="sig-metric-val" style="color:var(--green)">$${fmtN(s.total_usd)}</div><div class="sig-metric-lbl">Smart Inflow</div></div>`;
+    if(s.volume_24h)metricsHTML+=`<div class="sig-metric"><div class="sig-metric-val">$${fmtN(s.volume_24h)}</div><div class="sig-metric-lbl">24h Vol</div></div>`;
+    if(s.amount)metricsHTML+=`<div class="sig-metric"><div class="sig-metric-val" style="color:var(--green)">$${fmtN(s.amount)}</div><div class="sig-metric-lbl">Buy Amount</div></div>`;
+    if(s.concentration_pct)metricsHTML+=`<div class="sig-metric"><div class="sig-metric-val" style="color:#a855f7">${s.concentration_pct}%</div><div class="sig-metric-lbl">Concentration</div></div>`;
+    if(s.wallet_count)metricsHTML+=`<div class="sig-metric"><div class="sig-metric-val">${s.wallet_count}</div><div class="sig-metric-lbl">Wallets</div></div>`;
+    
+    let walletsHTML='';
+    if(s.wallets&&s.wallets.length){
+      walletsHTML=`<div class="sig-wallets"><div class="sig-wallets-title">Smart Wallets</div>${s.wallets.slice(0,5).map(w=>`<span class="sig-wallet-tag">${w}</span>`).join('')}</div>`;
+    }
+    
+    return`<div class="sig-card ${s.type}"><div><span class="sig-type-badge ${s.type}">${emoji} ${typeLabel}</span><span class="sig-confidence ${confClass}">${confLabel} ${s.confidence}%</span></div><div class="sig-token">${esc(s.token)}<span class="sig-token-full">${esc(s.token_name||'')}</span></div><div class="sig-ca" onclick="copyCA('${s.token_address}','${esc(s.token)}',event)">${addrShort} <button class="copy-btn" style="opacity:.4;pointer-events:auto" onclick="copyCA('${s.token_address}','${esc(s.token)}',event)">${copySVG}</button></div>${s.details?'<div class="sig-details">'+esc(s.details)+'</div>':''}<div class="sig-metrics">${metricsHTML}</div>${walletsHTML}<div class="sig-age">Token age: ${ageStr} | ${ago(s.timestamp*1000)} ago</div><div class="sig-actions"><a class="sig-buy-btn" href="https://gmgn.ai/sol/token/${s.token_address}" target="_blank">⚡ Buy</a><button class="sig-detail-btn" onclick="copyCA('${s.token_address}','${esc(s.token)}',event)">📋 Copy CA</button></div></div>`;
   }).join('');
 }
 

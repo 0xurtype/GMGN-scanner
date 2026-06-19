@@ -6,6 +6,16 @@ Polls GMGN API for real token data, serves via REST + SSE.
 import asyncio
 import json
 import os
+from pathlib import Path
+
+# Load .env from Hermes profile
+_env_path = Path.home() / ".hermes" / "profiles" / "default" / ".env"
+if _env_path.exists():
+    for line in _env_path.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 import subprocess
 import time
 from collections import defaultdict
@@ -46,6 +56,9 @@ SMART_WALLET_INTERVAL = 60  # seconds between smart wallet polls
 SMART_TOKEN_ENRICH_INTERVAL = 30  # seconds between token enrich cycles
 SMART_TOKEN_ENRICH_BATCH = 5  # max tokens to enrich per cycle
 SMART_TOKEN_ENRICH_DELAY = 2  # seconds between enrichments
+signals_db: list[dict] = []  # detected signals, newest first
+detected_signal_keys: set[str] = set()  # dedup key: f"{signal_type}:{token_addr}"
+TG_CHAT_ID = os.environ.get('TG_CHAT_ID', '6156910362')  # default to user's chat
 
 
 def load_seen():
@@ -435,6 +448,11 @@ async def scan_smart_wallets():
     print(f"[smart-wallets] {len(trades)} trades, {len(wallets_db)} unique wallets tracked")
     print(f"[smart-tokens] {len(smart_tokens_db)} unique tokens tracked")
 
+    # Detect signals after aggregation
+    new_signals = detect_signals()
+    if new_signals:
+        asyncio.create_task(send_tg_alert(new_signals))
+
 
 async def smart_wallet_loop():
     """Background loop for smart wallet tracking."""
@@ -443,6 +461,8 @@ async def smart_wallet_loop():
             await scan_smart_wallets()
         except Exception as e:
             print(f"[smart-wallets] error: {e}")
+        if len(detected_signal_keys) > 500:
+            detected_signal_keys.clear()
         await asyncio.sleep(SMART_WALLET_INTERVAL)
 
 
@@ -515,6 +535,171 @@ async def smart_token_enrich_loop():
 
         except Exception as e:
             print(f"[smart-token-enrich] error: {e}")
+
+
+ACCUMULATION_WINDOW = 7200  # 2 hours in seconds
+ACCUMULATION_MIN_WALLETS = 2  # minimum smart wallets to trigger
+LARGE_BUY_THRESHOLD = 500  # USD
+CONCENTRATION_THRESHOLD = 0.10  # 10% of volume
+MAX_TOKEN_AGE = 172800  # 2 days in seconds
+
+def detect_signals():
+    """Scan recent trades for pre-hype patterns."""
+    global signals_db, detected_signal_keys
+    now = int(time.time())
+    new_signals = []
+
+    for token_addr, token_data in smart_tokens_db.items():
+        symbol = token_data.get('symbol', '?')
+        name = token_data.get('name', '')
+        wallets = list(token_data.get('wallets', {}).values())
+        mcap = token_data.get('mcap', 0)
+        volume = token_data.get('volume_24h', 0)
+
+        # Get token age from tokens_db (trenches data)
+        token_info = tokens_db.get(token_addr, {})
+        created_ts = token_info.get('created_timestamp', 0)
+        age_sec = now - created_ts if created_ts else 0  # default 0 = assume new
+        if created_ts and age_sec > MAX_TOKEN_AGE:
+            continue  # only skip if we KNOW it's old
+
+        # --- SIGNAL 1: Accumulation ---
+        buy_wallets = [w for w in wallets if w.get('action_type') in ('first_buy', 'buy_more') and (now - w.get('last_action_ts', 0)) < ACCUMULATION_WINDOW]
+        if len(buy_wallets) >= ACCUMULATION_MIN_WALLETS:
+            total_inflow = sum(w.get('inflow', 0) for w in buy_wallets)
+            wallet_details = []
+            for w in buy_wallets:
+                label = w.get('twitter', '') or w.get('address', '')[:8]
+                wallet_details.append(label)
+            key = f'accumulation:{token_addr}'
+            if key not in detected_signal_keys:
+                age_hours = round(age_sec / 3600, 1)
+                signal = {
+                    'type': 'accumulation',
+                    'token': symbol,
+                    'token_name': name,
+                    'token_address': token_addr,
+                    'wallet_count': len(buy_wallets),
+                    'total_usd': round(total_inflow, 2),
+                    'mcap': mcap,
+                    'volume_24h': volume,
+                    'wallets': wallet_details,
+                    'details': f'{len(buy_wallets)} smart wallets bought in {round((now - min(w.get("last_action_ts", now) for w in buy_wallets)) / 3600, 1)}h',
+                    'age_hours': age_hours,
+                    'timestamp': now,
+                    'confidence': min(95, 40 + len(buy_wallets) * 15 + (10 if mcap < 500000 else 0)),
+                }
+                new_signals.append(signal)
+                detected_signal_keys.add(key)
+
+        # --- SIGNAL 2: Large Buy ---
+        for w in wallets:
+            if w.get('inflow', 0) >= LARGE_BUY_THRESHOLD and w.get('action_type') in ('first_buy', 'buy_more'):
+                key = f'large_buy:{token_addr}:{w["address"]}'
+                if key not in detected_signal_keys:
+                    label = w.get('twitter', '') or w.get('address', '')[:8]
+                    signal = {
+                        'type': 'large_buy',
+                        'token': symbol,
+                        'token_name': name,
+                        'token_address': token_addr,
+                        'wallet': label,
+                        'wallet_address': w.get('address', ''),
+                        'amount': round(w.get('inflow', 0), 2),
+                        'mcap': mcap,
+                        'volume_24h': volume,
+                        'age_hours': round(age_sec / 3600, 1),
+                        'timestamp': now,
+                        'confidence': min(90, 50 + (20 if w.get('inflow', 0) >= 1000 else 0) + (10 if mcap < 300000 else 0)),
+                    }
+                    new_signals.append(signal)
+                    detected_signal_keys.add(key)
+
+        # --- SIGNAL 3: Smart Money Concentration ---
+        if volume > 0 and token_data.get('smart_inflow', 0) != 0:
+            concentration = abs(token_data.get('smart_inflow', 0)) / volume
+            if concentration >= CONCENTRATION_THRESHOLD:
+                key = f'concentration:{token_addr}'
+                if key not in detected_signal_keys:
+                    signal = {
+                        'type': 'concentration',
+                        'token': symbol,
+                        'token_name': name,
+                        'token_address': token_addr,
+                        'inflow_usd': round(token_data.get('smart_inflow', 0), 2),
+                        'volume_24h': volume,
+                        'concentration_pct': round(concentration * 100, 1),
+                        'wallet_count': len(wallets),
+                        'mcap': mcap,
+                        'age_hours': round(age_sec / 3600, 1),
+                        'timestamp': now,
+                        'confidence': min(85, 40 + round(concentration * 100) + (10 if mcap < 500000 else 0)),
+                    }
+                    new_signals.append(signal)
+                    detected_signal_keys.add(key)
+
+    if new_signals:
+        signals_db = new_signals + signals_db
+        signals_db = signals_db[:200]  # keep last 200
+        print(f'[signals] {len(new_signals)} new signals detected')
+
+    return new_signals
+
+
+async def send_tg_alert(signals: list[dict]):
+    """Send signal alerts via Telegram bot."""
+    import urllib.request
+    if not signals:
+        return
+
+    token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+    if not token:
+        return
+
+    # Batch max 5 signals per message
+    for batch in [signals[i:i+5] for i in range(0, len(signals), 5)]:
+        lines = ['🚨 <b>PRE-HYPE SIGNAL</b>\n']
+
+        emoji_map = {'accumulation': '🔥', 'large_buy': '💰', 'concentration': '📊'}
+
+        for s in batch:
+            emoji = emoji_map.get(s['type'], '⚡')
+            type_label = s['type'].replace('_', ' ').upper()
+            addr_short = s['token_address'][:6] + '...' + s['token_address'][-4:]
+
+            if s['type'] == 'accumulation':
+                lines.append(f'{emoji} <b>{type_label}</b> — ${s["token"]}')
+                lines.append(f'{s["details"]}')
+                lines.append(f'Inflow: ${s["total_usd"]:,.0f} | MCap: ${s["mcap"]:,.0f}')
+                lines.append(f'Wallets: {", ".join(s["wallets"][:3])}')
+            elif s['type'] == 'large_buy':
+                lines.append(f'{emoji} <b>{type_label}</b> — ${s["token"]}')
+                lines.append(f'{s["wallet"]} bought ${s["amount"]:,.0f}')
+                lines.append(f'MCap: ${s["mcap"]:,.0f} | Age: {s["age_hours"]}h')
+            elif s['type'] == 'concentration':
+                lines.append(f'{emoji} <b>{type_label}</b> — ${s["token"]}')
+                lines.append(f'Smart inflow: {s["concentration_pct"]}% of 24h vol')
+                lines.append(f'${s["inflow_usd"]:,.0f} from {s["wallet_count"]} wallets')
+
+            lines.append(f'Contract: <code>{addr_short}</code>')
+            lines.append('')
+
+        text = '\n'.join(lines)
+
+        url = f'https://api.telegram.org/bot{token}/sendMessage'
+        payload = json.dumps({
+            'chat_id': TG_CHAT_ID,
+            'text': text,
+            'parse_mode': 'HTML',
+            'disable_web_page_preview': True,
+        })
+
+        try:
+            req = urllib.request.Request(url, data=payload.encode(), headers={'Content-Type': 'application/json'})
+            urllib.request.urlopen(req, timeout=10)
+            print(f'[tg-alert] Sent {len(batch)} signals')
+        except Exception as e:
+            print(f'[tg-alert] Error: {e}')
 
 
 async def scan_trenches():
@@ -776,6 +961,17 @@ def get_smart_tokens(
 
 
 # ── SSE Endpoint ────────────────────────────────────────────────────────
+
+@app.get('/api/signals')
+def get_signals(
+    signal_type: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Get detected pre-hype signals."""
+    result = signals_db
+    if signal_type:
+        result = [s for s in result if s.get('type') == signal_type]
+    return {'signals': result[:limit], 'total': len(signals_db)}
 
 @app.get("/api/stream")
 async def stream_tokens():
