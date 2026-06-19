@@ -140,26 +140,43 @@ tr.row td.r{text-align:right}
 .panel-view{display:none;flex:1;overflow:hidden;flex-direction:column}
 .panel-view.active{display:flex}
 
-/* ═══ TRENDING ═══ */
-.trend-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;padding:14px;overflow-y:auto;flex:1}
-.tc-card{background:linear-gradient(135deg,var(--bg3),rgba(20,20,30,.8));border:1px solid var(--bdr);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-.tc-card:hover{border-color:var(--bdr2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
-.tc-card::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(0,230,118,.02),transparent 50%);pointer-events:none}
-.tc-rank{position:absolute;top:8px;right:10px;font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:900;color:rgba(255,255,255,.03);line-height:1}
-.tc-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.tc-card .ta{width:36px;height:36px}
-.tc-card .sym{font-size:14px;font-weight:800}
-.tc-card .name{font-size:10px;color:var(--t3)}
-.tc-ca{display:flex;align-items:center;gap:4px;margin-bottom:8px}
-.tc-ca .ca-text{font-size:9px}
-.tc-ca .copy-btn{opacity:.6;pointer-events:auto}
-.tc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
-.tc-m{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0;border-bottom:1px solid rgba(30,30,50,.5)}
-.tc-m:last-child{border-bottom:none}
-.tc-ml{color:var(--t3)}.tc-mv{font-family:'JetBrains Mono',monospace;font-weight:600}
-.tc-bar{height:3px;background:var(--bg5);border-radius:2px;margin-top:8px;overflow:hidden}
-.tc-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
-
+/* ═══ SMART WALLETS ═══ */
+.sw-tag-select{background:var(--bg3);color:var(--t3);border:1px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:11px;font-family:inherit;cursor:pointer;outline:none}
+.sw-tag-select:focus{border-color:var(--cyan-b)}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;padding:14px;overflow-y:auto;flex:1}
+.sw-card{background:linear-gradient(135deg,var(--bg3),rgba(20,20,30,.8));border:1px solid var(--bdr);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.sw-card:hover{border-color:var(--cyan-b);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.sw-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--green));opacity:0;transition:opacity .2s}
+.sw-card:hover::before{opacity:1}
+.sw-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sw-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;position:relative}
+.sw-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid var(--bg2)}
+.sw-dot.hot{background:var(--green)}.sw-dot.warm{background:var(--yellow)}.sw-dot.cold{background:var(--t4)}
+.sw-addr{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+.sw-twitter{font-size:10px;color:var(--cyan);font-weight:600}
+.sw-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.sw-tag{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;text-transform:uppercase}
+.sw-tag.smart_degen{background:rgba(0,230,118,.15);color:var(--green)}
+.sw-tag.kol{background:rgba(29,185,255,.15);color:var(--cyan)}
+.sw-tag.axiom{background:rgba(168,85,247,.15);color:#a855f7}
+.sw-tag.gmgn{background:rgba(255,165,0,.15);color:#ffa500}
+.sw-tag.fresh_wallet{background:rgba(255,255,100,.15);color:var(--yellow)}
+.sw-tag.top_followed{background:rgba(255,105,180,.15);color:#ff69b4}
+.sw-tag.default{background:rgba(255,255,255,.08);color:var(--t3)}
+.sw-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.sw-stat{text-align:center}
+.sw-stat-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700}
+.sw-stat-lbl{font-size:9px;color:var(--t4);margin-top:2px}
+.sw-tokens{margin-top:10px;border-top:1px solid rgba(255,255,255,.05);padding-top:8px}
+.sw-tokens-title{font-size:10px;color:var(--t3);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.sw-token-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.sw-token-row:last-child{border-bottom:none}
+.sw-token-sym{font-weight:700;color:var(--t2)}
+.sw-token-vol{font-family:'JetBrains Mono',monospace;color:var(--t3)}
+.sw-token-addr{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t4);cursor:pointer}
+.sw-token-addr:hover{color:var(--cyan)}
+.sw-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--t4)}
+.sw-empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
 /* ═══ SMART MONEY ═══ */
 .sm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px;padding:14px;overflow-y:auto;flex:1}
 .sm-card{background:linear-gradient(135deg,var(--bg3),rgba(20,20,30,.8));border:1px solid var(--bdr);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s}
@@ -389,7 +406,7 @@ tr.row td.r{text-align:right}
   <div class="th-tabs">
     <button class="th-tab on" data-view="scanner" onclick="switchView(this)">New Pairs</button>
     <!-- Trending tab removed -->
-    <button class="th-tab" data-view="smartmoney" onclick="switchView(this)">Smart Money</button>
+    <button class="th-tab" data-view="smartwallets" onclick="switchView(this)">Smart Wallets</button>
     <button class="th-tab" data-view="kols" onclick="switchView(this)">KOL Activity</button>
     <button class="th-tab" data-view="wallets" onclick="switchView(this)">Wallet Tracker</button>
   </div>
@@ -457,18 +474,30 @@ tr.row td.r{text-align:right}
 
     <!-- Trending view removed -->
 
-    <!-- SMART MONEY -->
-    <div class="panel-view" id="view-smartmoney">
+    <!-- SMART WALLETS -->
+    <div class="panel-view" id="view-smartwallets">
       <div class="tbl-head">
         <div class="pill-row">
-          <button class="pill on" onclick="smSort='pnl';renderSmartMoney(this)">Top PnL</button>
-          <button class="pill" onclick="smSort='win';renderSmartMoney(this)">Win Rate</button>
-          <button class="pill" onclick="smSort='recent';renderSmartMoney(this)">Most Active</button>
-          <button class="pill" onclick="smSort='whale';renderSmartMoney(this)">Whales</button>
+          <button class="pill on" onclick="swSort='vol';renderSmartWallets(this)">By Volume</button>
+          <button class="pill" onclick="swSort='trades';renderSmartWallets(this)">By Trades</button>
+          <button class="pill" onclick="swSort='activity';renderSmartWallets(this)">Most Recent</button>
+          <button class="pill" onclick="swSort='tokens';renderSmartWallets(this)">Diverse</button>
         </div>
-        <div class="th-r"><span class="th-cnt" id="smCnt">—</span><div class="live-badge"><div class="dot"></div>TRACKING</div></div>
+        <div class="th-r">
+          <select id="swTag" class="sw-tag-select" onchange="renderSmartWallets()">
+            <option value="">All Tags</option>
+            <option value="smart_degen">Smart Degen</option>
+            <option value="kol">KOL</option>
+            <option value="axiom">Axiom</option>
+            <option value="gmgn">GMGN</option>
+            <option value="fresh_wallet">Fresh</option>
+            <option value="top_followed">Top Followed</option>
+          </select>
+          <span class="th-cnt" id="swCnt">—</span>
+          <div class="live-badge"><div class="dot"></div>LIVE</div>
+        </div>
       </div>
-      <div class="sm-grid" id="smGrid"></div>
+      <div class="sw-grid" id="swGrid"></div>
     </div>
 
     <!-- KOL ACTIVITY -->
@@ -537,7 +566,7 @@ tr.row td.r{text-align:right}
 <script>
 const $=id=>document.getElementById(id);
 let tokens=[],smartWallets=[],kols=[];
-let selD='all',tMin=5,trendSort='hot',smSort='pnl',kolSort='active',currentView='scanner';
+let selD='all',tMin=5,trendSort='hot',smSort='pnl',kolSort='active',swSort='vol',currentView='scanner';
 
 // ═══ WALLET TRACKER STATE ═══
 let trackedWallets=[];
@@ -568,6 +597,8 @@ function ago(ts){const d=(Date.now()-ts)/1000;if(d<60)return Math.floor(d)+'s';i
 function fmtP(p){if(!p)return'$0';if(p<.000001)return'$'+p.toExponential(1);if(p<.01)return'$'+p.toFixed(8).replace(/0+$/,'');return'$'+p.toFixed(6)}
 function fmt$(v){if(!v)return'$0';if(v>=1e6)return'$'+(v/1e6).toFixed(1)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(1)+'K';return'$'+Math.round(v)}
 function trunc(a,n=6){return a?.length>n*2?a.slice(0,n)+'..'+a.slice(-n):a||'—'}
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return Math.abs(h)}
+function fmtN(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(0)}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
 
 function copyCA(ca,label,e){
@@ -622,8 +653,7 @@ async function loadLiveData(){
   // If tokens empty, generate mock
   renderScanner();
   renderRightPanel();
-  if(currentView==='trending')renderTrending();
-  if(currentView==='smartmoney')renderSmartMoney();
+  if(currentView==='smartwallets')renderSmartWallets();
   if(currentView==='kols')renderKols();
 }
 
@@ -682,8 +712,7 @@ function switchView(el){
   $('view-'+currentView).classList.add('active');
   $('leftPanel').style.display=currentView==='scanner'?'':'none';
   $('scannerTools').style.display=currentView==='scanner'?'flex':'none';
-  if(currentView==='trending')renderTrending();
-  if(currentView==='smartmoney')renderSmartMoney();
+  if(currentView==='smartwallets')renderSmartWallets();
   if(currentView==='kols')renderKols();
   if(currentView==='wallets'){renderWalletList();if(selectedWallet)renderWalletDetail(selectedWallet)}
 }
@@ -712,23 +741,46 @@ function renderScanner(){
     return`<tr class="row" onclick="openTokenModal(${ti})"><td style="position:relative"><div class="fl ${flC}"></div><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t4);padding-left:6px">${i+1}</span></td><td><div class="tc" style="align-items:flex-start"><div class="ta" style="background:${t.color}">${t.sym.charAt(0)}</div><div class="tr2"><div class="ts">${esc(t.sym)} ${isNew?'<span class="badge new">NEW</span>':''}</div><div class="tp"><span class="dex ${t.dex==='pump.fun'?'pump':t.dex}">${t.dex}</span></div><div class="ca-wrap" style="margin-top:2px"><span class="ca-text" onclick="copyCA('${t.ca}','${t.sym}',event)">${trunc(t.ca,8)}</span><button class="copy-btn" onclick="copyCA('${t.ca}','${t.sym}',event)">${copySVG} Copy</button></div></div></div></td><td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t2)">${ago(t.deployed)}</span></td><td><span class="badge ${dS}">${dS.toUpperCase()}</span><br><span style="font-size:10px;color:var(--t4)">${t.devDeploys} dep</span></td><td><div class="kols">${kols}</div></td><td class="r"><div class="sm-c"><span class="sm-n" style="color:${smC}">${t.smartW}</span><div class="sm-b"><div class="sm-f" style="width:${smP}%;background:${smC}"></div></div></div></td><td class="r"><span style="font-family:'JetBrains Mono',monospace;font-size:12px">${fmtP(t.price)}</span></td><td class="r"><span class="pc ${pC}">${t.pc5>0?'+':''}${t.pc5}%</span></td><td class="r"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2)">${fmt$(t.liq)}</span></td><td class="r"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2)">${fmt$(t.mcap)}</span></td><td class="r"><span style="font-family:'JetBrains Mono',monospace;font-size:12px">${t.holders}</span></td><td class="r"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><svg width="32" height="32" viewBox="0 0 36 36" style="transform:rotate(-90deg)"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--bg5)" stroke-width="3"/><circle cx="18" cy="18" r="15" fill="none" stroke="${scC}" stroke-width="3" stroke-dasharray="94.2" stroke-dashoffset="${scO}" stroke-linecap="round" class="score-ring" style="--offset:${scO}"/></svg><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${scC}">${sc}</span></div></td></tr>`}).join('');
 }
 
-// ═══ TRENDING ═══
-function renderTrending(btn){
+// ═══ SMART WALLETS ═══
+let smartWalletCache=null,swLastFetch=0;
+function renderSmartWallets(btn){
   if(btn){btn.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on')}
-  const sorted=[...tokens].sort((a,b)=>{if(trendSort==='hot')return(b.kols.length*10+b.smartW*3+parseFloat(b.pc5))-(a.kols.length*10+a.smartW*3+parseFloat(a.pc5));if(trendSort==='vol')return b.vol24h-a.vol24h;if(trendSort==='gainers')return parseFloat(b.pc5)-parseFloat(a.pc5);return b.holders-a.holders});
-  $('trendCnt').textContent=sorted.length+' tokens';
-  $('trendGrid').innerHTML=sorted.map((t,i)=>{
-    const sc=score(t),scC=sc>=70?'var(--green)':sc>=45?'var(--yellow)':'var(--red)';const pC=t.pc5>0?'up':t.pc5<0?'down':'flat';const barW=Math.min(100,Math.max(5,Math.round((parseFloat(t.pc5)+50)/130*100+t.kols.length*5+t.smartW*2)));
-    return`<div class="tc-card" onclick="openTokenModal(${tokens.indexOf(t)})"><div class="tc-rank">${i+1}</div><div class="tc-card-top"><div class="ta" style="background:${t.color};width:36px;height:36px;font-size:13px">${t.sym.charAt(0)}</div><div><div class="sym">${esc(t.sym)}</div><div class="name">${esc(t.name)} · ${t.dex}</div></div></div><div class="tc-ca"><span class="ca-text" onclick="copyCA('${t.ca}','${t.sym}',event)">${trunc(t.ca,8)}</span><button class="copy-btn" onclick="copyCA('${t.ca}','${t.sym}',event)" style="opacity:.6;pointer-events:auto">${copySVG} Copy</button></div><div class="tc-metrics"><div class="tc-m"><span class="tc-ml">Price</span><span class="tc-mv">${fmtP(t.price)}</span></div><div class="tc-m"><span class="tc-ml">5m</span><span class="tc-mv pc ${pC}">${t.pc5>0?'+':''}${t.pc5}%</span></div><div class="tc-m"><span class="tc-ml">MCap</span><span class="tc-mv">${fmt$(t.mcap)}</span></div><div class="tc-m"><span class="tc-ml">Vol 24h</span><span class="tc-mv">${fmt$(t.vol24h)}</span></div><div class="tc-m"><span class="tc-ml">Holders</span><span class="tc-mv">${t.holders}</span></div><div class="tc-m"><span class="tc-ml">KOLs</span><span class="tc-mv" style="color:${t.kols.length?'var(--purple)':'var(--t4)'}">${t.kols.length}</span></div><div class="tc-m"><span class="tc-ml">Smart $</span><span class="tc-mv" style="color:${t.smartW>=5?'var(--cyan)':'var(--t4)'}">${t.smartW}</span></div><div class="tc-m"><span class="tc-ml">Score</span><span class="tc-mv" style="color:${scC}">${sc}</span></div></div><div class="tc-bar"><div class="tc-bar-fill" style="width:${barW}%;background:linear-gradient(90deg,var(--green),var(--cyan))"></div></div></div>`}).join('');
+  const tagFilter=document.getElementById('swTag')?.value||'';
+  const now=Date.now()/1000;
+  if(!smartWalletCache||now-swLastFetch>30){
+    fetch(API+'/api/smart-wallets?sort='+swSort+(tagFilter?'&tag='+tagFilter:''))
+      .then(r=>r.json()).then(d=>{
+        smartWalletCache=d;swLastFetch=now;
+        _renderSWCards(d.wallets||[]);
+      }).catch(e=>{
+        console.error('smart-wallets fetch:',e);
+        _renderSWCards([]);
+      });
+  }else{
+    _renderSWCards(smartWalletCache.wallets||[]);
+  }
 }
-
-// ═══ SMART MONEY ═══
-function renderSmartMoney(btn){
-  if(btn){btn.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on')}
-  const sorted=[...smartWallets].sort((a,b)=>{if(smSort==='pnl')return b.totalPnl-a.totalPnl;if(smSort==='win')return(b.wins/b.total)-(a.wins/a.total);if(smSort==='recent')return b.buys.length-a.buys.length;return b.totalSol-a.totalSol});
-  $('smCnt').textContent=sorted.length+' wallets';
-  $('smGrid').innerHTML=sorted.map(w=>{const winRate=Math.round(w.wins/w.total*100);const pnlC=w.totalPnl>=0?'var(--green)':'var(--red)';
-    return`<div class="sm-card"><div class="smc-top"><div class="smc-av" style="background:${w.tagColor}">${w.name.charAt(0)}</div><div class="smc-info"><div><span class="smc-name">${w.name}</span><span class="smc-tag ${w.tag}">${w.tag.toUpperCase()}</span></div><div class="smc-addr">${w.name}</div></div></div><div class="smc-stats"><div class="smc-stat"><div class="smc-sl">Win Rate</div><div class="smc-sv" style="color:${winRate>=60?'var(--green)':winRate>=40?'var(--yellow)':'var(--red)'}">${winRate}%</div></div><div class="smc-stat"><div class="smc-sl">Total PnL</div><div class="smc-sv" style="color:${pnlC}">${w.totalPnl>0?'+':''}${w.totalPnl}S</div></div><div class="smc-stat"><div class="smc-sl">Trades</div><div class="smc-sv">${w.total}</div></div><div class="smc-stat"><div class="smc-sl">Best</div><div class="smc-sv" style="color:var(--green)">${w.bestTrade}</div></div></div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:6px">Recent Trades</div><div class="smc-buys">${w.buys.slice(0,4).map(b=>`<div class="smc-buy"><div style="width:18px;height:18px;border-radius:50%;background:${b.color};display:grid;place-items:center;font-size:8px;font-weight:800;color:#fff;flex-shrink:0">${b.sym.charAt(0)}</div><div style="flex:1;min-width:0"><div class="tk">${b.sym}</div><div class="smc-ca"><span class="ca-text" style="font-size:9px" onclick="copyCA('${b.ca}','${b.sym}',event)">${trunc(b.ca,6)}</span></div></div><span class="sol">${b.sol}S</span><span class="pnl ${b.pnl>=0?'up':'down'}">${b.pnl>0?'+':''}${b.pnl}%</span><span class="ago">${ago(Date.now()-b.time*1000)}</span></div>`).join('')}</div></div>`}).join('');
+function _renderSWCards(wallets){
+  const grid=$('swGrid');const cnt=$('swCnt');
+  if(!wallets.length){
+    grid.innerHTML='<div class="sw-empty"><div class="sw-empty-icon">🔍</div><div>No smart wallets yet<br><small style="color:var(--t4)">Tracking starts automatically</small></div></div>';
+    cnt.textContent='0 wallets';return;
+  }
+  cnt.textContent=wallets.length+' wallets';
+  grid.innerHTML=wallets.map(w=>{
+    const addrShort=w.address.slice(0,6)+'...'+w.address.slice(-4);
+    const initials=w.twitter?'@'+w.twitter.charAt(0).toUpperCase():w.address.charAt(0);
+    const now=Date.now()/1000;
+    const ageSec=now-w.last_seen;
+    const activity=ageSec<120?'hot':ageSec<3600?'warm':'cold';
+    const buySellRatio=w.total_trades>0?Math.round(w.buys/w.total_trades*100):50;
+    const volColor=w.total_vol>=1000?'var(--green)':w.total_vol>=100?'var(--cyan)':'var(--t3)';
+    const topTokens=(w.tokens||[]).slice(0,4);
+    const tagColors={smart_degen:'smart_degen',kol:'kol',axiom:'axiom',gmgn:'gmgn',fresh_wallet:'fresh_wallet',top_followed:'top_followed'};
+    const tagHTML=(w.tags||[]).slice(0,3).map(t=>'<span class="sw-tag '+(tagColors[t]||'default')+'">'+t.replace(/_/g,' ')+'</span>').join('');
+    const tokensHTML=topTokens.length?'<div class="sw-tokens"><div class="sw-tokens-title">Top Tokens ('+topTokens.length+'/'+w.tokens_count+')</div>'+topTokens.map(t=>'<div class="sw-token-row"><span class="sw-token-sym">'+esc(t.symbol)+'</span><span class="sw-token-addr" onclick="copyCA(\''+t.address+'\',\''+t.symbol+'\',event)">'+t.address.slice(0,4)+'...'+t.address.slice(-3)+'</span><span class="sw-token-vol">$'+fmtN(t.vol)+'</span></div>').join('')+'</div>':'';
+    return'<div class="sw-card"><div class="sw-header"><div class="sw-avatar" style="background:hsl('+(hashStr(w.address)%360)+',60%,45%)">'+initials+'<div class="sw-dot '+activity+'"></div></div><div style="flex:1;min-width:0"><div class="sw-addr" title="'+w.address+'">'+addrShort+' <button class="copy-btn" style="opacity:.4;pointer-events:auto" onclick="copyCA(\''+w.address+'\',\'wallet\',event)">'+copySVG+'</button></div>'+(w.twitter?'<div class="sw-twitter">@'+esc(w.twitter)+'</div>':'')+'<div class="sw-tags">'+tagHTML+'</div></div></div><div class="sw-stats"><div class="sw-stat"><div class="sw-stat-val" style="color:'+volColor+'">$'+fmtN(w.total_vol)+'</div><div class="sw-stat-lbl">Volume</div></div><div class="sw-stat"><div class="sw-stat-val">'+w.total_trades+'</div><div class="sw-stat-lbl">Trades</div></div><div class="sw-stat"><div class="sw-stat-val" style="color:'+(buySellRatio>=60?'var(--green)':'var(--t3)')+'">'+buySellRatio+'%</div><div class="sw-stat-lbl">Buys</div></div></div>'+tokensHTML+'<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--t4)"><span>Opens: '+w.opens+' · Closes: '+w.closes+'</span><span>'+w.active_str+'</span></div></div>';
+  }).join('');
 }
 
 // ═══ KOLS ═══

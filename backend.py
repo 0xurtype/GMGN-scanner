@@ -39,6 +39,9 @@ sse_subscribers: list = []
 last_scan_time: float = 0
 scan_count: int = 0
 kol_cache: dict = {}  # cached KOL data
+wallets_db: dict[str, dict] = {}  # smart wallets keyed by address
+wallet_trades: list = []  # raw trades from last poll
+SMART_WALLET_INTERVAL = 60  # seconds between smart wallet polls
 
 
 def load_seen():
@@ -268,6 +271,83 @@ async def enrich_loop():
 
 # ── Background Scanner ──────────────────────────────────────────────────
 
+async def scan_smart_wallets():
+    """Poll GMGN smart money trades and aggregate per wallet."""
+    global wallet_trades
+    raw = gmgn_cli("track", "smartmoney", "--chain", "sol")
+    if not raw:
+        return
+
+    trades = raw.get("list", []) if isinstance(raw, dict) else []
+    if not isinstance(trades, list):
+        return
+
+    wallet_trades = trades  # store raw for frontend
+
+    # Aggregate per wallet
+    for t in trades:
+        addr = t.get("maker", "")
+        if not addr:
+            continue
+
+        info = t.get("maker_info", {})
+        sym = t.get("base_token", {}).get("symbol", "")
+        side = t.get("side", "")
+        vol = to_float(t.get("amount_usd", 0))
+        ts = t.get("timestamp", 0)
+        is_close = t.get("is_open_or_close", 0)
+        base_addr = t.get("base_address", "")
+
+        if addr not in wallets_db:
+            wallets_db[addr] = {
+                "address": addr,
+                "tags": info.get("tags", []),
+                "twitter": info.get("twitter_username", ""),
+                "first_seen": ts,
+                "last_seen": ts,
+                "total_trades": 0,
+                "buys": 0,
+                "sells": 0,
+                "opens": 0,
+                "closes": 0,
+                "total_vol": 0.0,
+                "tokens": {},  # sym -> {count, vol, last_ts}
+            }
+
+        w = wallets_db[addr]
+        w["last_seen"] = max(w["last_seen"], ts)
+        w["total_trades"] += 1
+        if side == "buy":
+            w["buys"] += 1
+        else:
+            w["sells"] += 1
+        if is_close:
+            w["closes"] += 1
+        else:
+            w["opens"] += 1
+        w["total_vol"] += vol
+
+        # Track per-token activity
+        if sym and sym not in ("SOL", "WSOL"):
+            if sym not in w["tokens"]:
+                w["tokens"][sym] = {"count": 0, "vol": 0.0, "last_ts": 0, "address": base_addr}
+            w["tokens"][sym]["count"] += 1
+            w["tokens"][sym]["vol"] += vol
+            w["tokens"][sym]["last_ts"] = max(w["tokens"][sym]["last_ts"], ts)
+
+    print(f"[smart-wallets] {len(trades)} trades, {len(wallets_db)} unique wallets tracked")
+
+
+async def smart_wallet_loop():
+    """Background loop for smart wallet tracking."""
+    while True:
+        try:
+            await scan_smart_wallets()
+        except Exception as e:
+            print(f"[smart-wallets] error: {e}")
+        await asyncio.sleep(SMART_WALLET_INTERVAL)
+
+
 async def scan_trenches():
     """Poll GMGN trenches for new tokens."""
     global last_scan_time, scan_count
@@ -341,7 +421,8 @@ async def startup():
     load_seen()
     asyncio.create_task(scanner_loop())
     asyncio.create_task(enrich_loop())
-    print("[startup] Scanner + enricher loops started")
+    asyncio.create_task(smart_wallet_loop())
+    print("[startup] Scanner + enricher + smart wallet loops started")
 
 
 # ── REST Endpoints ──────────────────────────────────────────────────────
@@ -434,7 +515,72 @@ def get_stats():
         "total_volume_24h": round(total_vol, 2),
         "avg_score": round(avg_score, 1),
         "enriched": enriched,
+        "smart_wallets_tracked": len(wallets_db),
     }
+
+
+@app.get("/api/smart-wallets")
+def get_smart_wallets(
+    sort: str = Query("vol", regex="^(vol|trades|activity|tokens)$"),
+    tag: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Get tracked smart wallets."""
+    wallets = list(wallets_db.values())
+
+    if tag:
+        wallets = [w for w in wallets if tag in w.get("tags", [])]
+
+    now = int(time.time())
+    sort_key = {
+        "vol": lambda w: w["total_vol"],
+        "trades": lambda w: w["total_trades"],
+        "activity": lambda w: now - w["last_seen"],  # most recent first
+        "tokens": lambda w: len(w["tokens"]),
+    }.get(sort, lambda w: w["total_vol"])
+
+    descending = sort != "activity"
+    wallets.sort(key=sort_key, reverse=descending)
+
+    # Format for frontend
+    result = []
+    for w in wallets[:limit]:
+        tokens_list = []
+        for sym, data in sorted(w["tokens"].items(), key=lambda x: x[1]["vol"], reverse=True):
+            tokens_list.append({
+                "symbol": sym,
+                "address": data["address"],
+                "count": data["count"],
+                "vol": round(data["vol"], 2),
+                "last_ts": data["last_ts"],
+            })
+
+        age_sec = now - w["last_seen"]
+        if age_sec < 60:
+            active_str = f"{age_sec}s ago"
+        elif age_sec < 3600:
+            active_str = f"{age_sec // 60}m ago"
+        else:
+            active_str = f"{age_sec // 3600}h ago"
+
+        result.append({
+            "address": w["address"],
+            "tags": w["tags"],
+            "twitter": w["twitter"],
+            "first_seen": w["first_seen"],
+            "last_seen": w["last_seen"],
+            "active_str": active_str,
+            "total_trades": w["total_trades"],
+            "buys": w["buys"],
+            "sells": w["sells"],
+            "opens": w["opens"],
+            "closes": w["closes"],
+            "total_vol": round(w["total_vol"], 2),
+            "tokens_count": len(w["tokens"]),
+            "tokens": tokens_list,
+        })
+
+    return {"wallets": result, "total": len(wallets_db), "raw_trades": len(wallet_trades)}
 
 
 # ── SSE Endpoint ────────────────────────────────────────────────────────
