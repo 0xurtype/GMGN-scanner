@@ -39,6 +39,7 @@ ENRICH_DELAY = 0.5  # seconds between enrichments (rate limit)
 SEEN_CACHE_SIZE = 5000
 SIGNAL_KEYS_FILE = Path(__file__).parent / 'data' / 'signal_keys.json'
 SIGNAL_KEYS_MAX = 3000
+SIGNAL_KEY_TTL = 6 * 3600  # 6 hours before signal key expires (re-alert allowed)
 
 DATA_DIR = Path(__file__).parent / "scanner_data"
 DATA_DIR.mkdir(exist_ok=True)
@@ -59,21 +60,37 @@ SMART_TOKEN_ENRICH_INTERVAL = 30  # seconds between token enrich cycles
 SMART_TOKEN_ENRICH_BATCH = 5  # max tokens to enrich per cycle
 SMART_TOKEN_ENRICH_DELAY = 2  # seconds between enrichments
 signals_db: list[dict] = []  # detected signals, newest first
-detected_signal_keys: set[str] = set()  # dedup key: f"{signal_type}:{token_addr}"
+detected_signal_keys: dict[str, float] = {}  # dedup key → timestamp
 
 def load_signal_keys():
     global detected_signal_keys
+    now = time.time()
     if SIGNAL_KEYS_FILE.exists():
         try:
-            detected_signal_keys = set(json.loads(SIGNAL_KEYS_FILE.read_text()))
+            raw = json.loads(SIGNAL_KEYS_FILE.read_text())
+            if isinstance(raw, dict):
+                detected_signal_keys = {k: v for k, v in raw.items() if now - v < SIGNAL_KEY_TTL}
+            elif isinstance(raw, list):
+                detected_signal_keys = {k: now for k in raw}
+            else:
+                detected_signal_keys = {}
+            print(f'[signal-keys] Loaded {len(detected_signal_keys)} keys ({sum(1 for v in detected_signal_keys.values() if now - v < 3600)} from last hour)')
         except Exception:
-            detected_signal_keys = set()
+            detected_signal_keys = {}
+    else:
+        detected_signal_keys = {}
 
 
 def save_signal_keys():
+    now = time.time()
     SIGNAL_KEYS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    data = list(detected_signal_keys)[-SIGNAL_KEYS_MAX:]
-    SIGNAL_KEYS_FILE.write_text(json.dumps(data))
+    valid = {k: v for k, v in detected_signal_keys.items() if now - v < SIGNAL_KEY_TTL}
+    if len(valid) > SIGNAL_KEYS_MAX:
+        sorted_keys = sorted(valid.items(), key=lambda x: x[1], reverse=True)
+        valid = dict(sorted_keys[:SIGNAL_KEYS_MAX])
+    detected_signal_keys.clear()
+    detected_signal_keys.update(valid)
+    SIGNAL_KEYS_FILE.write_text(json.dumps(valid))
 
 TG_CHAT_ID = os.environ.get('TG_CHAT_ID', '6156910362')  # default to user's chat
 
@@ -486,9 +503,7 @@ async def smart_wallet_loop():
         except Exception as e:
             print(f"[smart-wallets] error: {e}")
         if len(detected_signal_keys) > SIGNAL_KEYS_MAX:
-            # Evict oldest half instead of clearing all
-            keys_list = list(detected_signal_keys)
-            detected_signal_keys = set(keys_list[-SIGNAL_KEYS_MAX//2:])
+            save_signal_keys()
         await asyncio.sleep(SMART_WALLET_INTERVAL)
 
 
@@ -687,7 +702,7 @@ def detect_signals():
                     'confidence': min(95, 40 + len(buy_wallets) * 15 + (10 if mcap < 500000 else 0)),
                 }
                 new_signals.append(_enrich_dev(signal))
-                detected_signal_keys.add(key)
+                detected_signal_keys[key] = time.time()
 
         # --- SIGNAL 2: Large Buy ---
         for w in wallets:
@@ -710,7 +725,7 @@ def detect_signals():
                         'confidence': min(90, 50 + (20 if w.get('inflow', 0) >= 1000 else 0) + (10 if mcap < 300000 else 0)),
                     }
                     new_signals.append(_enrich_dev(signal))
-                    detected_signal_keys.add(key)
+                    detected_signal_keys[key] = time.time()
 
         # --- SIGNAL 3: Smart Money Concentration ---
         if volume > 0 and token_data.get('smart_inflow', 0) != 0:
@@ -733,7 +748,7 @@ def detect_signals():
                         'confidence': min(85, 40 + round(concentration * 100) + (10 if mcap < 500000 else 0)),
                     }
                     new_signals.append(_enrich_dev(signal))
-                    detected_signal_keys.add(key)
+                    detected_signal_keys[key] = time.time()
 
     if new_signals:
         signals_db = new_signals + signals_db
